@@ -1,6 +1,6 @@
 import Ember from 'ember';
 
-const { Route, inject, get, merge } = Ember;
+const { Route, inject, get, set, merge } = Ember;
 
 export default Route.extend({
   ellaSparse: inject.service(),
@@ -26,6 +26,6 @@ export default Route.extend({
   },
 
   setupController(controller, model) {
-    controller.set('words', model);
+    set(controller, 'words', model);
   }
 });
