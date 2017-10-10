@@ -1,6 +1,8 @@
 {{#ella-treadmill
-  content=model
+  content=words
   row='5em'
+  on-scroll-start=(action 'handleScrollStart')
+  on-scroll-end=(action 'handleScrollEnd')
   as |item|
 }}
   {{#if item.fetchingContent.isRunning}}

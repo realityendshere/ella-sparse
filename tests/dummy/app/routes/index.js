@@ -23,5 +23,9 @@ export default Route.extend({
 
       return store.query('word', query).then(handler);
     });
+  },
+
+  setupController(controller, model) {
+    controller.set('words', model);
   }
 });
