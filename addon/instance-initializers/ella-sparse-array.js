@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { task } from 'ember-concurrency';
-import SparseItem from 'ella-sparse/lib/ella-sparse-item';
 
 const DEFAULT_TTL = 36000000;
 
@@ -16,10 +15,20 @@ const {
   A,
   assert,
   RSVP: { Promise },
-  typeOf
+  typeOf,
+  ObjectProxy
 } = Ember;
 
-export default EmberObject.extend(EmberArray, {
+const EllaSparseArray = EmberObject.extend(EmberArray, {
+  __onFetch__() {
+    assert('Provide a custom `on-fetch` method to populate data into this sparse array');
+
+    return {
+      data: A(),
+      total: 0
+    };
+  },
+
   _length: null,
 
   enabled: true,
@@ -38,7 +47,9 @@ export default EmberObject.extend(EmberArray, {
     let _length = parseInt(get(this, '_length'), 10);
 
     return !isNaN(_length);
-  }),
+  }).readOnly(),
+
+  isNotLength: computed.not('isLength').readOnly(),
 
   isSparseArray: computed(function() {
     return true;
@@ -54,10 +65,10 @@ export default EmberObject.extend(EmberArray, {
     return this.objectAt(len - 1);
   }),
 
-  length: computed('_length', 'isLength', 'remoteQuery', {
+  length: computed('_length', 'isNotLength', 'remoteQuery', {
     get() {
-      if (!get(this, 'isLength')) {
-        this.get('findLengthTask').perform();
+      if (get(this, 'isNotLength')) {
+        this._fetchObjectAt(0);
 
         return 0;
       }
@@ -70,36 +81,42 @@ export default EmberObject.extend(EmberArray, {
     }
   }),
 
-  loading: computed.readOnly('findLengthTask.isRunning'),
+  loading: computed.and('isNotLength', 'fetchTask.isRunning'),
+
+  'on-fetch': computed(function() {
+    return this.__onFetch__;
+  }),
+
+  init() {
+    this._super();
+
+    assert('`on-fetch` must be a function', typeof get(this, 'on-fetch') === 'function');
+
+    return this;
+  },
 
   expire() {
-    get(this, 'findLengthTask').cancelAll();
-    get(this, 'fetchRecordsTask').cancelAll();
-
+    get(this, 'fetchTask').cancelAll();
     set(this, 'expired', Date.now());
+
     return this;
   },
 
   fetchObjectAt(idx, options = {}) {
-    idx = parseInt(idx, 10);
-
     let { noFetch } = options;
+
+    idx = parseInt(idx, 10);
 
     if (noFetch || !get(this, 'enabled')) {
       return this.sparseObjectAt(idx);
     }
 
-    let limit = parseInt(get(this, 'limit'), 10) || 1;
-    let start = Math.floor(idx / limit) * limit;
-    start = Math.max(start, 0);
-
-    get(this, 'fetchRecordsTask').perform({ start: start, length: limit });
-
-    return this.sparseObjectAt(idx);
+    return this._fetchObjectAt(idx);
   },
 
   filter(fn) {
     assert('filter() not supported in sparse arrays. Use filterBy instead.');
+
     return this;
   },
 
@@ -119,26 +136,18 @@ export default EmberObject.extend(EmberArray, {
   },
 
   fulfill(range, array) {
-    A(array).forEach((result, idx) => {
-      let item = this.sparseObjectAt(range.start + idx);
+    array = A(array);
+
+    for (let i = 0; i < range.length; i++) {
+      let itemIndex = range.start + i;
+      let item = this.sparseObjectAt(itemIndex);
 
       if (item && typeof item.resolveContent === 'function') {
-        item.resolveContent(result);
+        item.resolveContent(array.objectAt(i));
       }
-    });
+    }
 
     return this;
-  },
-
-  insertSparseItem(idx) {
-    let q = this.pathToIndex(idx);
-    let item = SparseItem.create({
-      __ttl__: get(this, 'ttl')
-    });
-
-    get(this, 'data')[idx] = item;
-
-    return get(this, q);
   },
 
   isCurrentFilter(obj) {
@@ -176,7 +185,7 @@ export default EmberObject.extend(EmberArray, {
   },
 
   sparseObjectAt(idx) {
-    return get(this, 'data')[idx] || this.insertSparseItem(idx);
+    return get(this, 'data')[idx] || this._insertSparseItem(idx);
   },
 
   unset(...idx) {
@@ -189,42 +198,35 @@ export default EmberObject.extend(EmberArray, {
     return this;
   },
 
-  _didRequestLength() {
-    let action = get(this, 'on-length');
-    let fn = get(this, ['target', 'actions', action].join('.'));
-    let query = get(this, 'remoteQuery');
-
-    if (typeof fn !== 'function') {
-      return new Promise((resolve) => {
-        assert('Cannot fetch length: `target` is undefined', get(this, 'target'));
-        assert('Cannot fetch length: `target` has no actions', get(this, 'target.actions'));
-        assert('Cannot fetch length: `on-length` action is invalid or undefined', typeof fn === 'function');
-
-        resolve(0);
-      });
-    }
-
-    return fn(query);
-  },
-
   _didRequestRange(range) {
-    let action = get(this, 'on-fetch');
-    let fn = get(this, ['target', 'actions', action].join('.'));
+    let fn = get(this, 'on-fetch');
     let query = get(this, 'remoteQuery');
 
     this._startFetchingContentInRange(range);
 
     if (typeof fn !== 'function') {
-      return new Promise((resolve) => {
-        assert('Cannot fetch results: `target` is undefined', get(this, 'target'));
-        assert('Cannot fetch results: `target` has no actions', get(this, 'target.actions'));
-        assert('Cannot fetch results: `on-fetch` action is invalid or undefined', typeof fn === 'function');
-
-        resolve(A());
-      });
+      fn = this.__onFetch__;
     }
 
-    return fn(range, query, this);
+    return fn(range, query);
+  },
+
+  _fetchObjectAt(idx) {
+    let limit = parseInt(get(this, 'limit'), 10) || 1;
+    let start = Math.floor(idx / limit) * limit;
+    start = Math.max(start, 0);
+
+    get(this, 'fetchTask').perform({ start: start, length: limit });
+
+    return this.sparseObjectAt(idx);
+  },
+
+  _insertSparseItem(idx) {
+    get(this, 'data')[idx] = EllaSparseItem.create({
+      __ttl__: get(this, 'ttl')
+    });
+
+    return get(this, this.pathToIndex(idx));
   },
 
   _requestRangeFailed(range, err) {
@@ -233,7 +235,7 @@ export default EmberObject.extend(EmberArray, {
     let until = Math.min((range.start + range.length), data.length);
 
     for (let i = from; i < until; i++) {
-      let item = data.objectAt(i);
+      let item = data[i];
 
       if (item && typeof item.reportError === 'function') {
         item.reportError(err);
@@ -267,19 +269,84 @@ export default EmberObject.extend(EmberArray, {
     return this;
   },
 
-  findLengthTask: task(function* () {
-    let length = yield this._didRequestLength();
-
-    set(this, 'length', length);
-  }).restartable(),
-
-  fetchRecordsTask: task(function* (range) {
+  fetchTask: task(function* (range) {
     try {
-      let records = yield this._didRequestRange(range);
+      let { data, total } = yield this._didRequestRange(range);
 
-      this.fulfill(range, records);
+      total = parseInt(total, 10);
+
+      if (!isNaN(total) && total >= 0 && total !== Infinity) {
+        set(this, 'length', total);
+      }
+
+      this.fulfill(range, data);
     } catch(e) {
       this._requestRangeFailed(range, e);
     }
   })
 });
+
+const EllaSparseItem = ObjectProxy.extend({
+  reportError: null,
+  resolveContent: null,
+
+  isSparseItem: computed(function() {
+    return true;
+  }).readOnly(),
+
+  __lastFetch__: 0,
+
+  __ttl__: DEFAULT_TTL,
+
+  __stale__: computed('__ttl__', '__lastFetch__', function() {
+    return Boolean((get(this, '__lastFetch__') + get(this, '__ttl__')) <= Date.now());
+  }).readOnly(),
+
+  isContentExpired(timestamp = 0) {
+    if (get(this, 'fetchingContent.isRunning')) {
+      return false;
+    }
+
+    return Boolean(get(this, '__stale__') || get(this, '__lastFetch__') <= timestamp);
+  },
+
+  resetContent() {
+    setProperties(this, {
+      content: null,
+      __lastFetch__: 0
+    });
+
+    return this;
+  },
+
+  __fetchContent() {
+    return new Promise((resolve, reject) => {
+      this.reportError = reject;
+      this.resolveContent = resolve;
+    });
+  },
+
+  fetchingContent: task(function* () {
+    setProperties(this, { content: null });
+
+    let content = yield this.__fetchContent();
+
+    if (typeof content === 'undefined') {
+      this.destroy();
+    }
+
+    setProperties(this, {
+      content: content,
+      __lastFetch__: Date.now()
+    });
+  }).drop()
+});
+
+export function initialize(appInstance) {
+  appInstance.register('ella-sparse:array', EllaSparseArray);
+}
+
+export default {
+  name: 'ella-sparse-arrays',
+  initialize
+};

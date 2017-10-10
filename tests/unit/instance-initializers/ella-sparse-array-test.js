@@ -1,15 +1,15 @@
 /* eslint ember/named-functions-in-promises: 0 */
 
-import { test, module } from 'ember-qunit';
 import Ember from 'ember';
+import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
+import { module, test } from 'qunit';
+import destroyApp from '../../helpers/destroy-app';
 import wait from 'ember-test-helpers/wait';
-import EllaSparse from 'ella-sparse/lib/ella-sparse';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
 
-const { get, set, run, RSVP: { defer }, typeOf, merge } = Ember;
+const { Application, get, set, run, merge, typeOf, RSVP: { defer } } = Ember;
 
-let actionTriggered = 0;
 let fetchSomeRecordsCalled = 0;
 
 const objectToParams = function(obj) {
@@ -21,21 +21,6 @@ const objectToParams = function(obj) {
     return `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`
   }).join('&');
 }
-
-const fetchTotalRecords = function(query = {}) {
-  query = merge({
-    limit: 1
-  }, query);
-
-  let params = objectToParams(query);
-  let uri = `/api/words?${params}`;
-
-  return fetch(uri).then((response) => {
-    return response.json();
-  }).then((json = {}) => {
-    return get(json, 'meta.total');
-  });
-};
 
 const fetchSomeRecords = function(range = {}, query = {}) {
   fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
@@ -51,51 +36,44 @@ const fetchSomeRecords = function(range = {}, query = {}) {
   return fetch(uri).then((response) => {
     return response.json();
   }).then((json = {}) => {
-    return get(json, 'data');
+    let result = {
+      data: get(json, 'data'),
+      total: get(json, 'meta.total')
+    };
+
+    return result;
   });
 };
 
-let defaultActions = {
-  fetchLength(query) {
-    actionTriggered = actionTriggered + 1;
-    return fetchTotalRecords(query);
-  },
-
-  fetchRecords(range, query, sparseArray) {
-    actionTriggered = actionTriggered + 1;
-    return fetchSomeRecords(range, query, sparseArray);
-  }
-};
-
-module('ella-sparse:lib:ella-sparse', {
-  unit: true,
+module('Unit | Instance Initializer | ella sparse array', {
   beforeEach() {
-    actionTriggered = 0;
     fetchSomeRecordsCalled = 0;
-
-    set(this, 'actions', defaultActions);
 
     this.server = startMirage();
     this.server.timing = 10;
+
+    run(() => {
+      this.application = Application.create();
+      this.appInstance = this.application.buildInstance();
+      initialize(this.appInstance);
+    });
   },
   afterEach() {
     this.server.shutdown();
+
+    run(this.appInstance, 'destroy');
+    destroyApp(this.application);
   }
 });
 
-test('Sparse array exists', function(assert) {
-  assert.expect(2);
-  assert.ok(EllaSparse);
-
-  let arr = EllaSparse.create();
-
-  assert.ok(get(arr, 'isSparseArray'));
+test('it uses a factory to create new instances', function(assert) {
+  assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
 });
 
 test('it inits with ttl: 36000000 (10 minutes)', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.equal(get(arr, 'ttl'), 36000000);
 });
@@ -103,7 +81,7 @@ test('it inits with ttl: 36000000 (10 minutes)', function(assert) {
 test('it inits with limit: 10', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.equal(get(arr, 'limit'), 10);
 });
@@ -111,7 +89,7 @@ test('it inits with limit: 10', function(assert) {
 test('it inits with expired: 0', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.equal(get(arr, 'expired'), 0);
 });
@@ -119,7 +97,7 @@ test('it inits with expired: 0', function(assert) {
 test('it inits with enabled: true', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.equal(get(arr, 'enabled'), true);
 });
@@ -127,7 +105,7 @@ test('it inits with enabled: true', function(assert) {
 test('it inits with data: {}', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.deepEqual(get(arr, 'data'), {});
 });
@@ -135,30 +113,16 @@ test('it inits with data: {}', function(assert) {
 test('it inits with isLength: false', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create();
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
   assert.equal(get(arr, 'isLength'), false);
-});
-
-test('it inits with length: 0', function(assert) {
-  assert.expect(1);
-
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength'
-  });
-
-  run(() => {
-    assert.equal(get(arr, 'length'), 0);
-  });
 });
 
 test('it inits with loading: false, becomes true after querying for "length"', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   assert.equal(get(arr, 'loading'), false);
@@ -169,10 +133,9 @@ test('it inits with loading: false, becomes true after querying for "length"', f
   });
 });
 
-test('it calls the "on-length" action once when length is unknown', function(assert) {
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength'
+test('it automatically fetches the first "page" of results when computing "length"', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(() => {
@@ -182,7 +145,7 @@ test('it calls the "on-length" action once when length is unknown', function(ass
     assert.equal(get(arr, 'loading'), true);
   });
 
-  assert.equal(actionTriggered, 1);
+  assert.equal(fetchSomeRecordsCalled, 1);
 
   return wait().then(() => {
     assert.equal(get(arr, 'length'), 1001);
@@ -190,13 +153,11 @@ test('it calls the "on-length" action once when length is unknown', function(ass
   });
 });
 
-test('.objectAt initially returns stale SparseArrayItems', function(assert) {
+test('.objectAt initially returns stale SparseItems', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   let item = arr.objectAt(0);
@@ -210,11 +171,8 @@ test('.objectAt returns `undefined` if requested index out of range', function(a
 
   let l = 42;
   let item;
-
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(() => {
@@ -231,12 +189,9 @@ test('.objectAt returns `undefined` if requested index out of range', function(a
 test('`firstObject` returns object at index 0', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
-
   let item1 = get(arr, 'firstObject');
   let item2 = arr.objectAt(0);
 
@@ -247,12 +202,9 @@ test('`firstObject` returns object at index 0', function(assert) {
 test('`lastObject` returns object at index (length - 1)', function(assert) {
   assert.expect(3);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
-
   let l = 67;
   let item1 = get(arr, 'lastObject');
 
@@ -269,17 +221,126 @@ test('`lastObject` returns object at index (length - 1)', function(assert) {
   assert.equal(item1, item2);
 });
 
+test('it updates length when resolved with numeric total', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {
+        total: 622
+      }
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 622);
+});
+
+test('it updates length when resolved with parseable total', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {
+        total: '1003'
+      }
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 1003);
+});
+
+test('it keeps existing length when resolved without a total', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {}
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+});
+
+test('it keeps existing length when resolved with a negative total', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {
+        total: -22
+      }
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+});
+
+test('it keeps existing length when resolved with a total of Infinity', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {
+        total: 10/0
+      }
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+});
+
+test('it keeps existing length when resolved with an invalid total', function(assert) {
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    length: 505,
+    'on-fetch': function() {
+      return {
+        total: 'I am invalid'
+      }
+    }
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+
+  run(() => {
+    arr.objectAt(120);
+  });
+
+  assert.equal(get(arr, 'length'), 505);
+});
+
 test('its item properties are updated once fetched', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
-  });
-
   let item1;
   let item2;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
 
   run(() => {
     get(arr, 'length');
@@ -296,19 +357,16 @@ test('its item properties are updated once fetched', function(assert) {
 test('.objectAt does not fetch data when sent a options.noFetch is truthy', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
-  });
-
   let item1;
   let item2;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
 
   run(() => {
     get(arr, 'length');
-    item1 = arr.objectAt(0, { noFetch: true });
-    item2 = arr.objectAt(723, { noFetch: true });
+    item1 = arr.objectAt(22, { noFetch: true });
+    item2 = arr.objectAt(123, { noFetch: true });
   });
 
   return wait().then(() => {
@@ -320,20 +378,17 @@ test('.objectAt does not fetch data when sent a options.noFetch is truthy', func
 test('.objectAt does not fetch data when enabled: false', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords',
+  let item1;
+  let item2;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords,
     enabled: false
   });
 
-  let item1;
-  let item2;
-
   run(() => {
     get(arr, 'length');
-    item1 = arr.objectAt(0);
-    item2 = arr.objectAt(723);
+    item1 = arr.objectAt(22);
+    item2 = arr.objectAt(123);
   });
 
   return wait().then(() => {
@@ -345,13 +400,10 @@ test('.objectAt does not fetch data when enabled: false', function(assert) {
 test('.objectsAt assembles an array of SparseItems', function(assert) {
   assert.expect(5);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
-  });
-
   let items;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
 
   run(() => {
     get(arr, 'length');
@@ -367,14 +419,64 @@ test('.objectsAt assembles an array of SparseItems', function(assert) {
   });
 });
 
-test('its items init with __stale__: true; __stale__ becomes false once content loads', function(assert) {
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
-  });
+test('it loads the first "page" (default 10) of SparseItems automatically', function(assert) {
+  assert.expect(4);
 
   let items;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
+
+  run(() => {
+    items = arr.objectsAt([0, 9]);
+  });
+
+  assert.equal(fetchSomeRecordsCalled, 1);
+
+  return wait().then(() => {
+    assert.equal(get(items[0], 'phrase'), 'brainy carnation');
+    assert.equal(get(items[1], 'phrase'), 'outgoing graph');
+
+    run(() => {
+      arr.objectAt(19);
+    });
+
+    assert.equal(fetchSomeRecordsCalled, 2, 'additional call to fetch page 2');
+  });
+});
+
+test('its "page size" can be modified with the "limit" property', function(assert) {
+  assert.expect(5);
+
+  let items;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords,
+    limit: 20
+  });
+
+  run(() => {
+    items = arr.objectsAt([0, 9]);
+  });
+
+  assert.equal(fetchSomeRecordsCalled, 1);
+
+  return wait().then(() => {
+    assert.equal(get(items[0], 'phrase'), 'brainy carnation');
+    assert.equal(get(items[1], 'phrase'), 'outgoing graph');
+
+    run(() => {
+      assert.equal(get(arr.objectAt(19), 'phrase'), 'precede average', 'item 20 already fetched');
+    });
+
+    assert.equal(fetchSomeRecordsCalled, 1, 'no additional call to fetch method');
+  });
+});
+
+test('its items init with __stale__: true; __stale__ becomes false once content loads', function(assert) {
+  let items;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
 
   run(() => {
     get(arr, 'length');
@@ -401,13 +503,10 @@ test('its items init with __stale__: true; __stale__ becomes false once content 
 test('.unset removes SparseItems and marks them stale', function(assert) {
   assert.expect(26);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
-  });
-
   let items;
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
 
   run(() => {
     get(arr, 'length');
@@ -458,13 +557,10 @@ test('.unset removes SparseItems and marks them stale', function(assert) {
 test('SparseItem __ttl__ inherits SparseArray ttl', function(assert) {
   assert.expect(2);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords',
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords,
     ttl: 50
   });
-
   let item = arr.objectAt(0);
 
   assert.equal(get(item, '__ttl__'), get(arr, 'ttl'));
@@ -476,11 +572,8 @@ test('SparseItem appears stale after ttl ms', function(assert) {
 
   let deferred = defer();
   let item;
-
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(function() {
@@ -502,13 +595,10 @@ test('SparseItem appears stale after ttl ms', function(assert) {
 test('SparseItem .isContentExpired initially returns true', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
-
-  let item = arr.objectAt(0, { noFetch: true });
+  let item = arr.objectAt(37, { noFetch: true });
 
   assert.equal(item.isContentExpired(get(arr, 'expired')), true);
 });
@@ -517,10 +607,8 @@ test('SparseItem .isContentExpired returns false while loading and after item is
   assert.expect(4);
 
   let item;
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(() => {
@@ -542,10 +630,8 @@ test('it only requests each "page" once', function(assert) {
 
   let item;
   let items;
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   assert.equal(fetchSomeRecordsCalled, 0);
@@ -564,14 +650,12 @@ test('it only requests each "page" once', function(assert) {
   });
 });
 
-test('Calling .expire makes all SparseItems stale', function(assert) {
-  assert.expect(4);
+test('Calling .expire makes all SparseItems stale and cancels all "fetchTasks"', function(assert) {
+  assert.expect(6);
 
   let item;
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(() => {
@@ -584,9 +668,16 @@ test('Calling .expire makes all SparseItems stale', function(assert) {
     assert.equal(item.isContentExpired(get(arr, 'expired')), false);
 
     run(() => {
+      arr.objectAt(123);
+    });
+
+    assert.equal(get(arr, 'fetchTask.isRunning'), true);
+
+    run(() => {
       arr.expire();
     });
 
+    assert.equal(get(arr, 'fetchTask.isRunning'), false);
     assert.equal(get(item, 'fetchingContent.isRunning'), false);
     assert.equal(item.isContentExpired(get(arr, 'expired')), true);
   });
@@ -596,10 +687,8 @@ test('Calling .expire causes SparseItems to be fetched again', function(assert) 
   assert.expect(5);
 
   let items;
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   assert.equal(fetchSomeRecordsCalled, 0);
@@ -636,10 +725,8 @@ test('.filterBy sets remoteQuery property', function(assert) {
   assert.expect(2);
 
   let item;
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   var query = { q: 'charm' };
@@ -661,11 +748,10 @@ test('.filterBy sets remoteQuery property', function(assert) {
 test('.filterBy causes isLength to become false', function(assert) {
   assert.expect(5);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
+
   let query = { q: 'charm' };
 
   assert.equal(get(arr, 'isLength'), false);
@@ -692,10 +778,8 @@ test('.filterBy causes isLength to become false', function(assert) {
 test('Responses to previous filterBy objects are ignored', function(assert) {
   assert.expect(1);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   run(() => {
@@ -723,10 +807,8 @@ test('Responses to previous filterBy objects are ignored', function(assert) {
 test('.filterBy throws error when provided a non-object', function(assert) {
   assert.expect(3);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
 
   assert.throws(function() {
@@ -745,11 +827,10 @@ test('.filterBy throws error when provided a non-object', function(assert) {
 test('.filter always throws an error', function(assert) {
   assert.expect(4);
 
-  let arr = EllaSparse.create({
-    target: this,
-    'on-length': 'fetchLength',
-    'on-fetch': 'fetchRecords'
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
   });
+
   let query = {foo: 'bar', baz: 'hello, world'};
 
   assert.throws(function() {
@@ -767,4 +848,22 @@ test('.filter always throws an error', function(assert) {
   assert.throws(function() {
     return arr.filter(function(item) { return (item.id === 1);});
   }, Error, 'throws an error when provided a function');
+});
+
+test('it throws error when "on-fetch" is not a function', function(assert) {
+  assert.expect(3);
+
+  assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+
+  assert.throws(function() {
+    this.appInstance.factoryFor('ella-sparse:array').create({
+      'on-fetch': 'not-a-function'
+    });
+  }, Error, 'throws an error when provided a string');
+
+  assert.throws(function() {
+    this.appInstance.factoryFor('ella-sparse:array').create({
+      'on-fetch': null
+    });
+  }, Error, 'throws an error when provided null');
 });
