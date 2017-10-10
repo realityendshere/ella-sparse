@@ -46,7 +46,7 @@
     "ember-cli-version-checker": "^2.0.0",
     "ember-data": "^2.16.2",
     "ember-disable-prototype-extensions": "^1.1.2",
-    "ember-ella-treadmill": "^0.13.0",
+    "ember-ella-treadmill": "^0.14.0",
     "ember-export-application-global": "^2.0.0",
     "ember-fetch": "^3.4.0",
     "ember-load-initializers": "^1.0.0",
