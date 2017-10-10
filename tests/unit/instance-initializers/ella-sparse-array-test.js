@@ -72,7 +72,7 @@ test('it uses a factory to create new instances', function(assert) {
   });
 });
 
-test('it inits with ttl: 36000000 (10 minutes)', function(assert) {
+test('it inits with ttl: 36000000 (10 hours)', function(assert) {
   assert.expect(1);
 
   run(() => {

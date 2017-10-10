@@ -309,9 +309,9 @@ const EllaSparseItem = ObjectProxy.extend({
 
   __ttl__: DEFAULT_TTL,
 
-  __stale__: computed('__ttl__', '__lastFetch__', function() {
+  __stale__: computed(function() {
     return Boolean((get(this, '__lastFetch__') + get(this, '__ttl__')) <= Date.now());
-  }).readOnly(),
+  }).readOnly().volatile(),
 
   isContentExpired(timestamp = 0) {
     if (get(this, 'fetchingContent.isRunning')) {
