@@ -67,70 +67,69 @@ module('Unit | Instance Initializer | ella sparse array', {
 });
 
 test('it uses a factory to create new instances', function(assert) {
-  assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+  run(() => {
+    assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+  });
 });
 
 test('it inits with ttl: 36000000 (10 minutes)', function(assert) {
   assert.expect(1);
 
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+  run(() => {
+    let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
-  assert.equal(get(arr, 'ttl'), 36000000);
+    assert.equal(get(arr, 'ttl'), 36000000);
+  });
 });
 
 test('it inits with limit: 10', function(assert) {
   assert.expect(1);
 
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+  run(() => {
+    let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
-  assert.equal(get(arr, 'limit'), 10);
+    assert.equal(get(arr, 'limit'), 10);
+  });
 });
 
 test('it inits with expired: 0', function(assert) {
   assert.expect(1);
 
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+  run(() => {
+    let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
-  assert.equal(get(arr, 'expired'), 0);
+    assert.equal(get(arr, 'expired'), 0);
+  });
 });
 
 test('it inits with enabled: true', function(assert) {
   assert.expect(1);
 
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+  run(() => {
+    let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
-  assert.equal(get(arr, 'enabled'), true);
-});
-
-test('it inits with data: {}', function(assert) {
-  assert.expect(1);
-
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
-
-  assert.deepEqual(get(arr, 'data'), {});
+    assert.equal(get(arr, 'enabled'), true);
+  });
 });
 
 test('it inits with isLength: false', function(assert) {
   assert.expect(1);
 
-  let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+  run(() => {
+    let arr = this.appInstance.factoryFor('ella-sparse:array').create();
 
-  assert.equal(get(arr, 'isLength'), false);
+    assert.equal(get(arr, 'isLength'), false);
+  });
 });
 
-test('it inits with loading: false, becomes true after querying for "length"', function(assert) {
-  assert.expect(2);
+test('it inits with loading: true', function(assert) {
+  assert.expect(1);
 
   let arr = this.appInstance.factoryFor('ella-sparse:array').create({
     'on-fetch': fetchSomeRecords
   });
 
-  assert.equal(get(arr, 'loading'), false);
-
-  run(() => {
-    get(arr, 'length');
-    assert.equal(get(arr, 'loading'), true);
-  });
+  assert.equal(get(arr, 'loading'), true);
 });
 
 test('it automatically fetches the first "page" of results when computing "length"', function(assert) {
@@ -150,6 +149,22 @@ test('it automatically fetches the first "page" of results when computing "lengt
   return wait().then(() => {
     assert.equal(get(arr, 'length'), 1001);
     assert.equal(get(arr, 'loading'), false);
+  });
+});
+
+test('.objectAt initially returns loading SparseItems', function(assert) {
+  assert.expect(2);
+
+  let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    'on-fetch': fetchSomeRecords
+  });
+
+  let item = arr.objectAt(0);
+
+  assert.equal(get(item, 'is_loading'), true);
+
+  return wait().then(() => {
+    assert.equal(get(item, 'is_loading'), false);
   });
 });
 
@@ -634,7 +649,7 @@ test('it only requests each "page" once', function(assert) {
     'on-fetch': fetchSomeRecords
   });
 
-  assert.equal(fetchSomeRecordsCalled, 0);
+  assert.equal(fetchSomeRecordsCalled, 1, 'automatically fetch first page');
 
   run(() => {
     get(arr, 'length');
@@ -646,7 +661,7 @@ test('it only requests each "page" once', function(assert) {
   return wait().then(() => {
     assert.equal(get(items[2], 'phrase'), 'cheap milk');
     assert.equal(get(item, 'phrase'), 'outgoing graph');
-    assert.equal(fetchSomeRecordsCalled, 1);
+    assert.equal(fetchSomeRecordsCalled, 1, 'used cached results from first page');
   });
 });
 
@@ -684,14 +699,12 @@ test('Calling .expire makes all SparseItems stale and cancels all "fetchTasks"',
 });
 
 test('Calling .expire causes SparseItems to be fetched again', function(assert) {
-  assert.expect(5);
+  assert.expect(4);
 
   let items;
   let arr = this.appInstance.factoryFor('ella-sparse:array').create({
     'on-fetch': fetchSomeRecords
   });
-
-  assert.equal(fetchSomeRecordsCalled, 0);
 
   run(() => {
     get(arr, 'length');
@@ -853,7 +866,9 @@ test('.filter always throws an error', function(assert) {
 test('it throws error when "on-fetch" is not a function', function(assert) {
   assert.expect(3);
 
-  assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+  run(() => {
+    assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+  });
 
   assert.throws(function() {
     this.appInstance.factoryFor('ella-sparse:array').create({

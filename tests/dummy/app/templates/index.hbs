@@ -5,7 +5,7 @@
   on-scroll-end=(action 'handleScrollEnd')
   as |item|
 }}
-  {{#if item.fetchingContent.isRunning}}
+  {{#if item.is_loading}}
     Loading...
   {{else}}
     <p>

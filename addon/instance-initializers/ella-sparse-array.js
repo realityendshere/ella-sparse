@@ -294,6 +294,13 @@ const EllaSparseItem = ObjectProxy.extend({
   reportError: null,
   resolveContent: null,
 
+  is_loading: computed('fetchingContent.performCount', 'fetchingContent.isRunning', function() {
+    return Boolean(
+      get(this, 'fetchingContent.isRunning') ||
+      get(this, 'fetchingContent.performCount') === 0
+    );
+  }).readOnly(),
+
   isSparseItem: computed(function() {
     return true;
   }).readOnly(),
