@@ -49,8 +49,6 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     return !isNaN(_length);
   }).readOnly(),
 
-  isNotLength: computed.not('isLength').readOnly(),
-
   isSparseArray: computed(function() {
     return true;
   }).readOnly(),
@@ -65,10 +63,10 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     return this.objectAt(len - 1);
   }),
 
-  length: computed('_length', 'isNotLength', 'remoteQuery', {
+  length: computed('_length', 'loading', 'remoteQuery', {
     get() {
-      if (get(this, 'isNotLength')) {
-        this._fetchObjectAt(0);
+      if (get(this, 'loading')) {
+        this.fetchObjectAt(0);
 
         return 0;
       }
@@ -77,11 +75,13 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     },
 
     set(key, value) {
+      this.notifyPropertyChange('[]');
+
       return set(this, '_length', value);
     }
   }),
 
-  loading: computed.and('isNotLength', 'fetchTask.isRunning'),
+  loading: computed.not('isLength'),
 
   'on-fetch': computed(function() {
     return this.__onFetch__;
@@ -91,6 +91,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     this._super();
 
     assert('`on-fetch` must be a function', typeof get(this, 'on-fetch') === 'function');
+
+    get(this, 'length');
 
     return this;
   },
@@ -146,6 +148,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
         item.resolveContent(array.objectAt(i));
       }
     }
+
+    this.notifyPropertyChange('[]');
 
     return this;
   },

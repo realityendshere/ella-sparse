@@ -1,0 +1,19 @@
+{{#ella-treadmill
+  content=model
+  row='5em'
+  as |item|
+}}
+  {{#if item.fetchingContent.isRunning}}
+    Loading...
+  {{else}}
+    <p>
+      [{{item.id}}] {{item.phrase}}
+    </p>
+  {{/if}}
+{{else}}
+  {{#if model.loading}}
+    Loading...
+  {{else}}
+    <p>Nothing to see here.</p>
+  {{/if}}
+{{/ella-treadmill}}

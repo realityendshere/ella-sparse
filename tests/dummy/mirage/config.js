@@ -16,6 +16,14 @@ export default function() {
       });
     }
 
+    if (request.requestHeaders.Accept === 'application/vnd.api+json') {
+      let json = allWords.slice(offset, offset + limit);
+
+      json.meta = { total: allWords.length };
+
+      return json;
+    }
+
     return {
       data: allWords.slice(offset, offset + limit).models,
       meta: {
