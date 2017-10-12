@@ -221,8 +221,8 @@ enhancements or bugfixes.
 
 ### Installation
 
-* `git clone <repository-url>` this repository
-* `cd ember-ella-sparse`
+* `git clone http://github.com/realityendshere/ella-sparse.git` this repository
+* `cd ella-sparse`
 * `yarn install`
 
 ### Running
