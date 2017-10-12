@@ -4,7 +4,7 @@ I once worked on an Ember project where a customer had created over 30,000
 records. To support sorting, filtering, pagination, and other functionality, all
 30,000 records had to be fetched up front in the route's model hook. Needless to
 say, the customer was pretty upset about waiting for 30,000 records to load from
-the server each time they reloaded the app. Fetching all that data took at least
+the server each time they visited the app. Fetching all that data took at least
 30 seconds. That's 30 seconds of staring at a loading indicator before getting
 anything useful or interactive to work with. And loading 30,000 records didn't
 do any favors for our server load.
@@ -23,8 +23,8 @@ The ultimate goal of Emberella Sparse is to:
 * fetch data gradually or as the UI needs it
 * maintain the illusion of a high-performance, fully functioning app for customers
 
-While most array functionality isn't implemented fully yet, Emberella Sparse
-the parts that are implemented work great with
+While most array functionality isn't implemented fully yet, the parts of
+Emberella Sparse that are implemented work great with
 [Emberella Treadmill](https://github.com/realityendshere/ella-treadmill).
 
 ## Requirements
@@ -67,7 +67,7 @@ export default Ember.Route.extend({
 
     return this.get('ellaSparse').array((range = {}, query = {}) => {
       // Combine the pagination and filter parameters into one object
-      // for Ember Data's .query method
+      // for Ember Data's .query() method
       query = Ember.merge({
         limit: get(range, 'length'),
         offset: get(range, 'start')
@@ -98,7 +98,7 @@ Ember.Route.extend({
 });
 ```
 
-Then, create new Emberella Sparse Array instances by calling the `.array` method
+Then, create new Emberella Sparse Array instances by calling the `.array()` method
 on the service. For example, you can return a sparse array from a route's
 `model()` hook.
 
@@ -120,17 +120,19 @@ The service's `.array()` method accepts two arguments: a function to call for
 fetching data and (optionally) custom configuration for the Emberella Sparse
 Array instance.
 
-The data fetch function should itself expact two arguments, both plain objects:
+The data fetch function should itself expect two arguments, both plain objects:
 `range` and `query`.
 
-The `range` object contains three properties:
+The `range` object provides data to build pagination queries for "paged" or
+"offset/limit" APIs. It contains three properties:
 
 * `length`: the number of items to fetch; the page size or limit
 * `start`: the index of the first item to fetch; the offset
 * `page`: the page number to retrieve
 
-The query object contains any additional filter parameters to pass along to the
-data persistence system.
+The `query` object contains additional filter parameters to pass along to the
+data persistence system. For example: the `query` of `{ surname: 'Smith' }`
+might get sent to an API as the query parameter `&surname=Smith`.
 
 The function should return a `Promise` that ultimately resolves with an object
 with the following structure:
@@ -143,15 +145,15 @@ return {
 ```
 
 * `data`: contains an array of records to use in fulfilling the specified range
-* `total`: indicates the number of records available overall (that match the current query parameters)
+* `total`: indicates the number of records available overall (that match the current `query` parameters)
 
 To recap: at a minimum, you write a custom function that takes requests from an
-Emberella Sparse Array and transforms them into a request to your data storage
-layer (e.g. an API). This allows Emberella Sparse to be data framework agnostic.
-You can use plain XHR requests, jQuery's AJAX, Ember Data, or another library to
-fetch and manage records. As long as you can provide a collection of data and a
-grand total count of all available records to Emberella Sparse Array, you should
-be in good shape.
+Emberella Sparse Array and transforms them into a request to your data
+persistence layer (e.g. an API). This allows Emberella Sparse to be data
+framework agnostic. You can use plain XHR requests, jQuery's AJAX, Ember Data,
+or another library to fetch and manage records. As long as you can provide a
+collection of data and a grand total count of all available records to Emberella
+Sparse Array, you should be in good shape.
 
 ### Options
 
@@ -160,14 +162,16 @@ Emberella Sparse Array can be configured to meet some variation of needs. Here a
 ```javascript
 Ember.Route.extend({
   model() {
-    let store = this.get('store');
-
     return this.get('ellaSparse').array((range = {}, query = {}) => {
       // A FUNCTION THAT FETCHES DATA WITH A PROMISE
     }, {
+      // Some optional configuration for your Emberella Sparse Array
       enabled: true,
+
       limit: 25,
+
       ttl: 600000,
+
       length: 1001
     });
   }
@@ -203,7 +207,7 @@ The default value is `10`.
 The general idea behind Emberella Sparse Array is that it is for displaying a
 large number of records. Given a large number of records, the opportunity for
 content to become stale or out of date is notable. The `ttl` (or time to live)
-configuation allows you to specify how long to wait after successfully fetching
+configuration allows you to specify how long to wait after successfully fetching
 content before that content should be fetched again. This value should be
 specified in milliseconds.
 
