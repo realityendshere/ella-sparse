@@ -1,7 +1,13 @@
 # Emberella Sparse
 
+Welcome!
+
+Emberella Sparse is an Ember CLI addon that provides a sparse array data
+structure. Its aim is to provide a means for populating an array of data into
+the client app in "pages" or "chunks" rather than all at once.
+
 I once worked on an Ember project where a customer had created over 30,000
-records. To support sorting, filtering, pagination, and other functionality, all
+records. Long story short: to support various functionality in the app, all
 30,000 records had to be fetched up front in the route's model hook. Needless to
 say, the customer was pretty upset about waiting for 30,000 records to load from
 the server each time they visited the app. Fetching all that data took at least
@@ -23,8 +29,8 @@ The ultimate goal of Emberella Sparse is to:
 * fetch data gradually or as the UI needs it
 * maintain the illusion of a high-performance, fully functioning app for customers
 
-While most array functionality isn't implemented fully yet, the parts of
-Emberella Sparse that are implemented work great with
+While not all of Ember's enhanced array functionality is completely implemented
+yet, the parts of Emberella Sparse that do work pair nicely with
 [Emberella Treadmill](https://github.com/realityendshere/ella-treadmill).
 
 ## Requirements
