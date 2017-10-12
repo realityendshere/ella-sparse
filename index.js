@@ -2,5 +2,5 @@
 'use strict';
 
 module.exports = {
-  name: 'ella-sparse'
+  name: 'ember-ella-sparse'
 };

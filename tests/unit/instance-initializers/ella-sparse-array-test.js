@@ -607,7 +607,7 @@ test('SparseItem appears stale after ttl ms', function(assert) {
   });
 });
 
-test('SparseItem .isContentExpired initially returns true', function(assert) {
+test('SparseItem .shouldFetchContent initially returns true', function(assert) {
   assert.expect(1);
 
   let arr = this.appInstance.factoryFor('ella-sparse:array').create({
@@ -615,10 +615,10 @@ test('SparseItem .isContentExpired initially returns true', function(assert) {
   });
   let item = arr.objectAt(37, { noFetch: true });
 
-  assert.equal(item.isContentExpired(get(arr, 'expired')), true);
+  assert.equal(item.shouldFetchContent(get(arr, 'expired')), true);
 });
 
-test('SparseItem .isContentExpired returns false while loading and after item is resolved', function(assert) {
+test('SparseItem .shouldFetchContent returns false while loading and after item is resolved', function(assert) {
   assert.expect(4);
 
   let item;
@@ -632,11 +632,11 @@ test('SparseItem .isContentExpired returns false while loading and after item is
   });
 
   assert.equal(get(item, 'fetchingContent.isRunning'), true);
-  assert.equal(item.isContentExpired(get(arr, 'expired')), false);
+  assert.equal(item.shouldFetchContent(get(arr, 'expired')), false);
 
   return wait().then(() => {
     assert.equal(get(item, 'fetchingContent.isRunning'), false);
-    assert.equal(item.isContentExpired(get(arr, 'expired')), false);
+    assert.equal(item.shouldFetchContent(get(arr, 'expired')), false);
   });
 });
 
@@ -680,7 +680,7 @@ test('Calling .expire makes all SparseItems stale and cancels all "fetchTasks"',
 
   return wait().then(() => {
     assert.equal(get(item, 'fetchingContent.isRunning'), false);
-    assert.equal(item.isContentExpired(get(arr, 'expired')), false);
+    assert.equal(item.shouldFetchContent(get(arr, 'expired')), false);
 
     run(() => {
       arr.objectAt(123);
@@ -694,7 +694,7 @@ test('Calling .expire makes all SparseItems stale and cancels all "fetchTasks"',
 
     assert.equal(get(arr, 'fetchTask.isRunning'), false);
     assert.equal(get(item, 'fetchingContent.isRunning'), false);
-    assert.equal(item.isContentExpired(get(arr, 'expired')), true);
+    assert.equal(item.shouldFetchContent(get(arr, 'expired')), true);
   });
 });
 

@@ -23,7 +23,7 @@ export default Route.extend({
 
       return store.query('word', query).then(handler);
     }, {
-      ttl: 60000
+      ttl: 600000
     });
   },
 
