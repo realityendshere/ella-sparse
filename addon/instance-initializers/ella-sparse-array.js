@@ -561,6 +561,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
 
       if (!isNaN(total) && total >= 0 && total !== Infinity) {
         set(this, 'length', total);
+      } else {
+        assert(`Numeric, non-negative "total" is required! ({ total: ${total} })`);
       }
 
       this.fulfill(range, data);
