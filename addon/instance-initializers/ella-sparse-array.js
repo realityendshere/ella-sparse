@@ -722,10 +722,6 @@ const EllaSparseItem = ObjectProxy.extend({
 
     let content = yield this.__fetchContent();
 
-    if (typeof content === 'undefined') {
-      this.destroy();
-    }
-
     setProperties(this, {
       content: content,
       __lastFetch__: Date.now()
