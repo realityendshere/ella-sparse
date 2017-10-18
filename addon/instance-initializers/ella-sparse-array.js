@@ -252,7 +252,6 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     return this;
   },
 
-
   /**
    * Initiate the retrieval of content at a specified index. If
    * `this.get('enabled')` is `false` or the options param indicates
@@ -298,12 +297,14 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       return this;
     }
 
-    setProperties(this, {
+    setProperties(this.expire(), {
       remoteQuery: obj,
       _length: null
     });
 
-    return this.expire();
+    get(this, 'length');
+
+    return this;
   },
 
   /**
