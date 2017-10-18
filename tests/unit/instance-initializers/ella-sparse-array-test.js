@@ -744,14 +744,12 @@ test('.filterBy sets remoteQuery property', function(assert) {
 
   var query = { q: 'charm' };
 
-  arr.filterBy(query);
-
-  assert.deepEqual(query, get(arr, 'remoteQuery'));
-
   run(() => {
-    arr.expire();
+    arr.filterBy(query);
     item = arr.objectAt(0);
   });
+
+  assert.deepEqual(query, get(arr, 'remoteQuery'));
 
   return wait().then(() => {
     assert.equal(get(item, 'phrase'), 'charming snowboarding');
