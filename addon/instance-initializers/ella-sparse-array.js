@@ -1,22 +1,14 @@
-import Ember from 'ember';
+import EmberObject from '@ember/object';
+import EmberArray from '@ember/array';
+import { computed, get, getProperties, set, setProperties } from '@ember/object';
+import { A } from '@ember/array';
+import { assert } from '@ember/debug';
+import { Promise } from 'rsvp';
+import { typeOf } from '@ember/utils';
+import ObjectProxy from '@ember/object/proxy';
 import { task } from 'ember-concurrency';
 
 const DEFAULT_TTL = 36000000;
-
-const {
-  Object: EmberObject,
-  Array: EmberArray,
-  computed,
-  get,
-  getProperties,
-  set,
-  setProperties,
-  A,
-  assert,
-  RSVP: { Promise },
-  typeOf,
-  ObjectProxy
-} = Ember;
 
 const ON_FETCH_FN = function() {
   assert('Provide a custom `on-fetch` method to populate data into this sparse array');

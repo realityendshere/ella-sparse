@@ -1,13 +1,16 @@
 /* eslint ember/named-functions-in-promises: 0 */
 
-import Ember from 'ember';
+import { run } from '@ember/runloop';
+import { get } from '@ember/object';
+import { merge } from '@ember/polyfills';
+import { typeOf } from '@ember/utils';
+import { getOwner } from '@ember/application';
+
 import { moduleFor, test } from 'ember-qunit';
 import wait from 'ember-test-helpers/wait';
 import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
-
-const { run, get, merge, typeOf, getOwner } = Ember;
 
 let fetchSomeRecordsCalled = 0;
 
