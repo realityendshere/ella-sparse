@@ -1,14 +1,17 @@
 /* eslint ember/named-functions-in-promises: 0 */
 
-import Ember from 'ember';
+import Application from '@ember/application';
+import { get, set } from '@ember/object';
+import { run } from '@ember/runloop';
+import { merge } from '@ember/polyfills';
+import { typeOf } from '@ember/utils';
+import { defer } from 'rsvp';
 import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
 import { module, test } from 'qunit';
 import destroyApp from '../../helpers/destroy-app';
 import wait from 'ember-test-helpers/wait';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
-
-const { Application, get, set, run, merge, typeOf, RSVP: { defer } } = Ember;
 
 let fetchSomeRecordsCalled = 0;
 

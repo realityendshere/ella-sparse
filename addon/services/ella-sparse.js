@@ -1,6 +1,6 @@
-import Ember from 'ember';
-
-const { Service, merge, getOwner } = Ember;
+import Service from '@ember/service';
+import { merge } from '@ember/polyfills';
+import { getOwner } from '@ember/application';
 
 /**
  * The `EllaSparseService` makes it easy to materialize new `EllaSparseArray`

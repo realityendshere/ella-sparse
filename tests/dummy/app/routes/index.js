@@ -1,9 +1,10 @@
-import Ember from 'ember';
-
-const { Route, inject, get, set, merge } = Ember;
+import Route from '@ember/routing/route';
+import { get, set } from '@ember/object';
+import { merge } from '@ember/polyfills';
+import { inject as service } from '@ember/service';
 
 export default Route.extend({
-  ellaSparse: inject.service(),
+  ellaSparse: service('ella-sparse'),
 
   model() {
     let store = get(this, 'store');
