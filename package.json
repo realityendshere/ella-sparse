@@ -48,7 +48,7 @@
     "ember-cli-version-checker": "^2.0.0",
     "ember-data": "~3.1.0",
     "ember-disable-prototype-extensions": "^1.1.2",
-    "ember-ella-treadmill": "^0.18.0",
+    "ember-ella-treadmill": "^0.19.0",
     "ember-export-application-global": "^2.0.0",
     "ember-fetch": "^4.0.2",
     "ember-inflector": "^3.0.0",
@@ -60,6 +60,7 @@
     "ember-try": "^0.2.23",
     "eslint-plugin-ember": "^5.0.0",
     "eslint-plugin-node": "^6.0.1",
+    "hoek": "^5.0.3",
     "loader.js": "^4.2.3"
   },
   "engines": {
