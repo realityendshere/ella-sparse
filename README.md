@@ -35,8 +35,11 @@ yet, the parts of Emberella Sparse that do work pair nicely with
 
 ## Requirements
 
-Ember Try tells me that Emberella Sparse will work with Ember 2.4 LTS or
-newer. It also passes all tests in the latest versions of Chrome, Firefox, and
+* Ember.js v3.4 or above
+* Ember CLI v2.13 or above
+* Node.js v8 or above
+
+It passes all tests in the latest versions of Chrome, Firefox, and
 Safari (macOS and iOS).
 
 ## Installation
