@@ -1,11 +1,13 @@
 import Application from '../../app';
 import config from '../../config/environment';
-import { merge } from '@ember/polyfills';
+import { merge, assign } from '@ember/polyfills';
 import { run } from '@ember/runloop';
 
+const emberAssign = (typeof assign === 'function') ? assign : merge;
+
 export default function startApp(attrs) {
-  let attributes = merge({}, config.APP);
-  attributes = merge(attributes, attrs); // use defaults, but you can override;
+  let attributes = emberAssign({}, config.APP);
+  attributes = assign(attributes, attrs); // use defaults, but you can override;
 
   return run(() => {
     let application = Application.create(attributes);

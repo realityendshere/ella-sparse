@@ -1,7 +1,9 @@
 import Route from '@ember/routing/route';
 import { get, set } from '@ember/object';
-import { merge } from '@ember/polyfills';
+import { merge, assign } from '@ember/polyfills';
 import { inject as service } from '@ember/service';
+
+const emberAssign = (typeof assign === 'function') ? assign : merge;
 
 export default Route.extend({
   ellaSparse: service('ella-sparse'),
@@ -10,7 +12,7 @@ export default Route.extend({
     let store = get(this, 'store');
 
     return get(this, 'ellaSparse').array((range = {}, query = {}) => {
-      query = merge({
+      query = emberAssign({
         limit: get(range, 'length'),
         offset: get(range, 'start')
       }, query);
