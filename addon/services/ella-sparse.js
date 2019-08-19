@@ -1,6 +1,8 @@
 import Service from '@ember/service';
-import { merge } from '@ember/polyfills';
+import { merge, assign } from '@ember/polyfills';
 import { getOwner } from '@ember/application';
+
+const emberAssign = (typeof assign === 'function') ? assign : merge;
 
 /**
  * The `EllaSparseService` makes it easy to materialize new `EllaSparseArray`
@@ -18,7 +20,7 @@ import { getOwner } from '@ember/application';
  *
  *     return this.get('ellaSparse').array((range = {}, query = {}) => {
  *       // Combine the pagination and filter parameters into one object
- *       query = Ember.merge({
+ *       query = Ember.assign({
  *         limit: Ember.get(range, 'length'),
  *         offset: Ember.get(range, 'start')
  *       }, query);
@@ -85,6 +87,6 @@ export default Service.extend({
     let owner = getOwner(this);
     let factory = owner.factoryFor('ella-sparse:array');
 
-    return factory.create(merge({ 'on-fetch': fn }, options));
+    return factory.create(emberAssign({ 'on-fetch': fn }, options));
   }
 });

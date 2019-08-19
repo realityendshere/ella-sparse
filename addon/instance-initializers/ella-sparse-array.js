@@ -1,4 +1,4 @@
-import { not } from '@ember/object/computed';
+import { not, reads } from '@ember/object/computed';
 import EmberObject from '@ember/object';
 import EmberArray from '@ember/array';
 import {
@@ -50,6 +50,9 @@ const ON_FETCH_FN = function() {
  */
 
 const EllaSparseArray = EmberObject.extend(EmberArray, {
+  __onFetch__: computed(function() {
+    return ON_FETCH_FN;
+  }),
 
   /**
    * The internal length property.
@@ -222,9 +225,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @type {Function}
    * @public
    */
-  'on-fetch': computed(function() {
-    return ON_FETCH_FN;
-  }),
+  'on-fetch': reads('__onFetch__'),
 
   init() {
     this._super();
@@ -630,19 +631,6 @@ const EllaSparseItem = ObjectProxy.extend({
   resolveContent: null,
 
   /**
-   * Indicates the content managed by this item should be refetched.
-   *
-   * @property __stale__
-   * @type {Boolean}
-   * @default true
-   * @readOnly
-   * @public
-   */
-  __stale__: computed(function() {
-    return Boolean((get(this, '__lastFetch__') + get(this, '__ttl__')) <= Date.now());
-  }).readOnly().volatile(),
-
-  /**
    * Returns `true` when the `fetchingContent` task has never been performed
    * or is in the `isRunning` state. Otherwise, returns `false`.
    *
@@ -728,6 +716,21 @@ const EllaSparseItem = ObjectProxy.extend({
       __lastFetch__: Date.now()
     });
   }).drop()
+});
+
+/**
+ * Indicates the content managed by this item should be refetched.
+ *
+ * @property __stale__
+ * @type {Boolean}
+ * @default true
+ * @readOnly
+ * @public
+ */
+Object.defineProperty(EllaSparseItem.prototype, '__stale__', {
+  get() {
+    return Boolean((get(this, '__lastFetch__') + get(this, '__ttl__')) <= Date.now());
+  }
 });
 
 export function initialize(appInstance) {

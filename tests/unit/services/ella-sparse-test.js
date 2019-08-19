@@ -2,7 +2,7 @@
 
 import { run } from '@ember/runloop';
 import { get } from '@ember/object';
-import { merge } from '@ember/polyfills';
+import { merge, assign } from '@ember/polyfills';
 import { typeOf } from '@ember/utils';
 import { getOwner } from '@ember/application';
 
@@ -13,6 +13,8 @@ import { settled } from '@ember/test-helpers';
 import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
+
+const emberAssign = (typeof assign === 'function') ? assign : merge;
 
 let fetchSomeRecordsCalled = 0;
 
@@ -29,7 +31,7 @@ const objectToParams = function(obj) {
 const fetchSomeRecords = function(range = {}, query = {}) {
   fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
 
-  query = merge({
+  query = emberAssign({
     limit: get(range, 'length'),
     offset: get(range, 'start')
   }, query);

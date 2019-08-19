@@ -77,7 +77,7 @@ export default Ember.Route.extend({
     return this.get('ellaSparse').array((range = {}, query = {}) => {
       // Combine the pagination and filter parameters into one object
       // for Ember Data's .query() method
-      query = Ember.merge({
+      query = Ember.assign({
         limit: get(range, 'length'),
         offset: get(range, 'start')
       }, query);
