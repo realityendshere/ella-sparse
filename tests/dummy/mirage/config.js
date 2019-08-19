@@ -1,8 +1,8 @@
 export default function() {
   this.namespace = 'api';
 
-  this.get('/words', ({ words }, request) => {
-    let allWords = words.all();
+  this.get('/words', function(schema, request) {
+    let allWords = schema.words.all();
     let { offset, limit, q } = request.queryParams;
 
     offset = parseInt(offset, 10) || 0;
@@ -16,8 +16,8 @@ export default function() {
       });
     }
 
-    if (request.requestHeaders.Accept === 'application/vnd.api+json') {
-      let json = allWords.slice(offset, offset + limit);
+    if (request.requestHeaders.accept === 'application/vnd.api+json') {
+      let json = this.serialize(allWords.slice(offset, offset + limit));
 
       json.meta = { total: allWords.length };
 
@@ -31,5 +31,4 @@ export default function() {
       }
     };
   });
-
 }
