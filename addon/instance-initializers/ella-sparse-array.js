@@ -1,6 +1,13 @@
+import { not } from '@ember/object/computed';
 import EmberObject from '@ember/object';
 import EmberArray from '@ember/array';
-import { computed, get, getProperties, set, setProperties } from '@ember/object';
+import {
+  computed,
+  get,
+  getProperties,
+  set,
+  setProperties
+} from '@ember/object';
 import { A } from '@ember/array';
 import { assert } from '@ember/debug';
 import { Promise } from 'rsvp';
@@ -195,7 +202,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @readOnly
    * @public
    */
-  loading: computed.not('isLength').readOnly(),
+  loading: not('isLength').readOnly(),
 
   /**
    * The on-fetch function is called each time a block of records must be
