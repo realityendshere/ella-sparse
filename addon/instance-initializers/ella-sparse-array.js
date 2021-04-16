@@ -6,7 +6,7 @@ import {
   get,
   getProperties,
   set,
-  setProperties
+  setProperties,
 } from '@ember/object';
 import { A } from '@ember/array';
 import { assert } from '@ember/debug';
@@ -17,12 +17,14 @@ import { task } from 'ember-concurrency';
 
 const DEFAULT_TTL = 36000000;
 
-const ON_FETCH_FN = function() {
-  assert('Provide a custom `on-fetch` method to populate data into this sparse array');
+const ON_FETCH_FN = function () {
+  assert(
+    'Provide a custom `on-fetch` method to populate data into this sparse array'
+  );
 
   return {
     data: A(),
-    total: 0
+    total: 0,
   };
 };
 
@@ -50,7 +52,7 @@ const ON_FETCH_FN = function() {
  */
 
 const EllaSparseArray = EmberObject.extend(EmberArray, {
-  __onFetch__: computed(function() {
+  __onFetch__: computed(function () {
     return ON_FETCH_FN;
   }),
 
@@ -118,7 +120,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  data: computed(function() {
+  data: computed(function () {
     return {};
   }).readOnly(),
 
@@ -131,8 +133,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  isLength: computed('_length', function() {
-    let _length = parseInt(get(this, '_length'), 10);
+  isLength: computed('_length', function () {
+    let _length = parseInt(this._length, 10);
 
     return !isNaN(_length);
   }).readOnly(),
@@ -148,7 +150,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @readOnly
    * @final
    */
-  isSparseArray: computed(function() {
+  isSparseArray: computed(function () {
     return true;
   }).readOnly(),
 
@@ -160,8 +162,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  lastObject: computed('length', function() {
-    let len = get(this, 'length');
+  lastObject: computed('length', function () {
+    let len = this.length;
 
     if (len === 0) {
       return undefined;
@@ -180,20 +182,20 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    */
   length: computed('_length', 'loading', 'remoteQuery', {
     get() {
-      if (get(this, 'loading')) {
+      if (this.loading) {
         this.fetchObjectAt(0);
 
         return 0;
       }
 
-      return get(this, '_length');
+      return this._length;
     },
 
     set(key, value) {
       this.notifyPropertyChange('[]');
 
       return set(this, '_length', value);
-    }
+    },
   }),
 
   /**
@@ -230,9 +232,12 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
   init() {
     this._super();
 
-    assert('`on-fetch` must be a function', typeof get(this, 'on-fetch') === 'function');
+    assert(
+      '`on-fetch` must be a function',
+      typeof this['on-fetch'] === 'function'
+    );
 
-    get(this, 'length');
+    this.length;
 
     return this;
   },
@@ -246,7 +251,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    */
   expire() {
-    get(this, 'fetchTask').cancelAll();
+    this.fetchTask.cancelAll();
     set(this, 'expired', Date.now());
 
     return this;
@@ -268,7 +273,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
 
     idx = parseInt(idx, 10);
 
-    if (noFetch || !get(this, 'enabled')) {
+    if (noFetch || !this.enabled) {
       return this.sparseObjectAt(idx);
     }
 
@@ -291,7 +296,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    */
   filterBy(obj = {}) {
-    assert("filterBy only supports objects.", typeOf(obj) === 'object');
+    assert('filterBy only supports objects.', typeOf(obj) === 'object');
 
     if (this.isCurrentFilter(obj)) {
       return this;
@@ -299,10 +304,10 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
 
     setProperties(this.expire(), {
       remoteQuery: obj,
-      _length: null
+      _length: null,
     });
 
-    get(this, 'length');
+    this.length;
 
     return this;
   },
@@ -342,7 +347,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    */
   isCurrentFilter(obj) {
-    let current = get(this, 'remoteQuery');
+    let current = this.remoteQuery;
 
     return JSON.stringify(obj) === JSON.stringify(current);
   },
@@ -377,7 +382,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
 
     item = this.sparseObjectAt(idx);
 
-    if (item && item.shouldFetchContent(get(this, 'expired')) !== true) {
+    if (item && item.shouldFetchContent(this.expired) !== true) {
       return item;
     }
 
@@ -408,7 +413,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    */
   sparseObjectAt(idx) {
-    return get(this, 'data')[idx] || this._insertSparseItem(idx);
+    return this.data[idx] || this._insertSparseItem(idx);
   },
 
   /**
@@ -439,8 +444,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _didRequestRange(range) {
-    let fn = get(this, 'on-fetch');
-    let query = get(this, 'remoteQuery');
+    let fn = this['on-fetch'];
+    let query = this.remoteQuery;
 
     this._startFetchingContentInRange(range);
 
@@ -460,15 +465,15 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _fetchObjectAt(idx) {
-    let limit = parseInt(get(this, 'limit'), 10) || 1;
+    let limit = parseInt(this.limit, 10) || 1;
     let pageIdx = Math.floor(idx / limit);
     let start = pageIdx * limit;
     start = Math.max(start, 0);
 
-    get(this, 'fetchTask').perform({
+    this.fetchTask.perform({
       start: start,
       length: limit,
-      page: pageIdx + 1
+      page: pageIdx + 1,
     });
 
     return this.sparseObjectAt(idx);
@@ -483,8 +488,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _insertSparseItem(idx) {
-    get(this, 'data')[idx] = EllaSparseItem.create({
-      __ttl__: get(this, 'ttl')
+    this.data[idx] = EllaSparseItem.create({
+      __ttl__: this.ttl,
     });
 
     return get(this, this.pathToIndex(idx));
@@ -499,9 +504,9 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _requestRangeFailed(range, err) {
-    let data = get(this, 'data');
+    let data = this.data;
     let from = range.start;
-    let until = Math.min((range.start + range.length), data.length);
+    let until = Math.min(range.start + range.length, data.length);
 
     for (let i = from; i < until; i++) {
       let item = data[i];
@@ -520,11 +525,11 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _startFetchingContentInRange(range) {
-    for (let i = range.start; i < (range.start + range.length); i++) {
+    for (let i = range.start; i < range.start + range.length; i++) {
       let item = this.sparseObjectAt(i);
 
       if (item) {
-        get(item, 'fetchingContent').perform();
+        item.fetchingContent.perform();
       }
     }
   },
@@ -562,14 +567,16 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       if (!isNaN(total) && total >= 0 && total !== Infinity) {
         set(this, 'length', total);
       } else {
-        assert(`Numeric, non-negative "total" is required! ({ total: ${total} })`);
+        assert(
+          `Numeric, non-negative "total" is required! ({ total: ${total} })`
+        );
       }
 
       this.fulfill(range, data);
-    } catch(e) {
+    } catch (e) {
       this._requestRangeFailed(range, e);
     }
-  })
+  }),
 });
 
 /**
@@ -584,7 +591,6 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
  */
 
 const EllaSparseItem = ObjectProxy.extend({
-
   /**
    * A Javascript timestamp indicating the last time this item's content was
    * resolved. Used along with the `__ttl__` property to identify and refetch
@@ -640,10 +646,10 @@ const EllaSparseItem = ObjectProxy.extend({
    * @public
    * @readOnly
    */
-  is_loading: computed('fetchingContent.{performCount,isRunning}', function() {
+  is_loading: computed('fetchingContent.{performCount,isRunning}', function () {
     return Boolean(
       get(this, 'fetchingContent.isRunning') ||
-      get(this, 'fetchingContent.performCount') === 0
+        get(this, 'fetchingContent.performCount') === 0
     );
   }).readOnly(),
 
@@ -658,7 +664,7 @@ const EllaSparseItem = ObjectProxy.extend({
    * @readOnly
    * @final
    */
-  isSparseItem: computed(function() {
+  isSparseItem: computed(function () {
     return true;
   }).readOnly(),
 
@@ -680,7 +686,7 @@ const EllaSparseItem = ObjectProxy.extend({
       return false;
     }
 
-    return Boolean(get(this, '__stale__') || get(this, '__lastFetch__') <= timestamp);
+    return Boolean(this.__stale__ || this.__lastFetch__ <= timestamp);
   },
 
   /**
@@ -693,7 +699,7 @@ const EllaSparseItem = ObjectProxy.extend({
   resetContent() {
     setProperties(this, {
       content: null,
-      __lastFetch__: 0
+      __lastFetch__: 0,
     });
 
     return this;
@@ -713,9 +719,9 @@ const EllaSparseItem = ObjectProxy.extend({
 
     setProperties(this, {
       content: content,
-      __lastFetch__: Date.now()
+      __lastFetch__: Date.now(),
     });
-  }).drop()
+  }).drop(),
 });
 
 /**
@@ -729,8 +735,8 @@ const EllaSparseItem = ObjectProxy.extend({
  */
 Object.defineProperty(EllaSparseItem.prototype, '__stale__', {
   get() {
-    return Boolean((get(this, '__lastFetch__') + get(this, '__ttl__')) <= Date.now());
-  }
+    return Boolean(this.__lastFetch__ + this.__ttl__ <= Date.now());
+  },
 });
 
 export function initialize(appInstance) {
@@ -739,5 +745,5 @@ export function initialize(appInstance) {
 
 export default {
   name: 'ella-sparse-arrays',
-  initialize
+  initialize,
 };
