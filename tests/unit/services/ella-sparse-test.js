@@ -14,47 +14,55 @@ import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
 
-const emberAssign = (typeof assign === 'function') ? assign : merge;
+const emberAssign = typeof assign === 'function' ? assign : merge;
 
 let fetchSomeRecordsCalled = 0;
 
-const objectToParams = function(obj) {
+const objectToParams = function (obj) {
   if (typeOf(obj) !== 'object') {
     return '';
   }
 
-  return Object.keys(obj).sort().map((key) => {
-    return `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`
-  }).join('&');
-}
-
-const fetchSomeRecords = function(range = {}, query = {}) {
-  fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
-
-  query = emberAssign({
-    limit: get(range, 'length'),
-    offset: get(range, 'start')
-  }, query);
-
-  let params = objectToParams(query);
-  let uri = `/api/words?${params}`
-
-  return fetch(uri).then((response) => {
-    return response.json();
-  }).then((json = {}) => {
-    let result = {
-      data: get(json, 'data'),
-      total: get(json, 'meta.total')
-    };
-
-    return result;
-  });
+  return Object.keys(obj)
+    .sort()
+    .map((key) => {
+      return `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`;
+    })
+    .join('&');
 };
 
-module('Unit | Service | ella sparse', function(hooks) {
+const fetchSomeRecords = function (range = {}, query = {}) {
+  fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
+
+  query = emberAssign(
+    {
+      limit: range.length,
+      offset: range.start,
+    },
+    query
+  );
+
+  let params = objectToParams(query);
+  let uri = `/api/words?${params}`;
+
+  return fetch(uri)
+    .then((response) => {
+      return response.json();
+    })
+    .then((json = {}) => {
+      let result = {
+        data: json.data,
+        total: get(json, 'meta.total'),
+      };
+
+      return result;
+    });
+};
+
+module('Unit | Service | ella sparse', function (hooks) {
   setupTest(hooks);
 
-  hooks.beforeEach(function() {
+  hooks.beforeEach(function () {
     fetchSomeRecordsCalled = 0;
 
     this.server = startMirage();
@@ -64,27 +72,26 @@ module('Unit | Service | ella sparse', function(hooks) {
       this.service = this.owner.lookup('service:ella-sparse');
       initialize(getOwner(this.service));
     });
-
   });
 
-  hooks.afterEach(function() {
+  hooks.afterEach(function () {
     this.server.shutdown();
   });
 
-  test('ella-sparse service exists', function(assert) {
+  test('ella-sparse service exists', function (assert) {
     let service = this.owner.lookup('service:ella-sparse');
 
     assert.ok(service);
     assert.ok(this.service);
   });
 
-  test('.array returns an instance of EllaSparseArray', function(assert) {
+  test('.array returns an instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords);
 
-    assert.ok(get(arr, 'isSparseArray'));
+    assert.ok(arr.isSparseArray);
   });
 
-  test('.array sets the "on-fetch" method of the returned EllaSparseArray', function(assert) {
+  test('.array sets the "on-fetch" method of the returned EllaSparseArray', function (assert) {
     let item1;
     let item2;
     let arr = this.service.array(fetchSomeRecords);
@@ -92,7 +99,7 @@ module('Unit | Service | ella sparse', function(hooks) {
     assert.expect(3);
 
     run(() => {
-      get(arr, 'length');
+      arr.length;
       item1 = arr.objectAt(1);
       item2 = arr.objectAt(314);
     });
@@ -105,21 +112,21 @@ module('Unit | Service | ella sparse', function(hooks) {
     });
   });
 
-  test('.array sets "ttl" property on instance of EllaSparseArray', function(assert) {
+  test('.array sets "ttl" property on instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords, { ttl: 50 });
 
-    assert.equal(get(arr, 'ttl'), 50);
+    assert.equal(arr.ttl, 50);
   });
 
-  test('.array sets "enabled" property on instance of EllaSparseArray', function(assert) {
+  test('.array sets "enabled" property on instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords, { enabled: false });
 
-    assert.equal(get(arr, 'enabled'), false);
+    assert.equal(arr.enabled, false);
   });
 
-  test('.array sets "length" property on instance of EllaSparseArray', function(assert) {
+  test('.array sets "length" property on instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords, { length: 1000 });
 
-    assert.equal(get(arr, 'length'), 1000);
+    assert.equal(arr.length, 1000);
   });
 });

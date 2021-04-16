@@ -3,7 +3,7 @@ import config from '../../config/environment';
 import { merge, assign } from '@ember/polyfills';
 import { run } from '@ember/runloop';
 
-const emberAssign = (typeof assign === 'function') ? assign : merge;
+const emberAssign = typeof assign === 'function' ? assign : merge;
 
 export default function startApp(attrs) {
   let attributes = emberAssign({}, config.APP);

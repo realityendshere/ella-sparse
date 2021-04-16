@@ -12,6 +12,6 @@ export default Controller.extend({
 
     handleScrollEnd() {
       set(this, 'model.enabled', true);
-    }
-  }
+    },
+  },
 });

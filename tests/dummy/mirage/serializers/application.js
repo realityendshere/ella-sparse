@@ -7,5 +7,5 @@ export default JSONAPISerializer.extend({
     json.meta = object.meta;
 
     return json;
-  }
+  },
 });
