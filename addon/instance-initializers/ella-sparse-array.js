@@ -239,6 +239,10 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
 
     this.length;
 
+    console.log(
+      '********************************************************************** hi'
+    );
+
     return this;
   },
 
