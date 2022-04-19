@@ -1,6 +1,6 @@
 {
   "name": "ember-ella-sparse",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "The default blueprint for ember-cli addons.",
   "keywords": [
     "ember-addon",
@@ -33,9 +33,9 @@
     "test:ember-compatibility": "ember try:each"
   },
   "dependencies": {
-    "ember-cli-babel": "^7.26.6",
-    "ember-cli-htmlbars": "^6.0.0",
-    "ember-concurrency": "^2.2.0"
+    "ember-cli-babel": "^7.26.11",
+    "ember-cli-htmlbars": "^6.0.1",
+    "ember-concurrency": "^2.2.1"
   },
   "devDependencies": {
     "@ember/optional-features": "^2.0.0",
@@ -45,7 +45,7 @@
     "@glimmer/tracking": "^1.0.4",
     "babel-eslint": "^10.1.0",
     "broccoli-asset-rev": "^3.0.0",
-    "ember-auto-import": "^1.11.3",
+    "ember-auto-import": "^2.4.1",
     "ember-cli": "~3.28.4",
     "ember-cli-dependency-checker": "^3.2.0",
     "ember-cli-inject-live-reload": "^2.1.0",
