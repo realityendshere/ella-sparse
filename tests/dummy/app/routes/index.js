@@ -9,9 +9,9 @@ export default Route.extend({
   ellaSparse: service('ella-sparse'),
 
   model() {
-    let store = get(this, 'store');
+    let store = this.store;
 
-    return get(this, 'ellaSparse').array((range = {}, query = {}) => {
+    return this.ellaSparse.array((range = {}, query = {}) => {
       query = emberAssign({
         limit: get(range, 'length'),
         offset: get(range, 'start')
