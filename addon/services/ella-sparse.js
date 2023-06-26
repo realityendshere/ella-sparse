@@ -1,8 +1,8 @@
 import Service from '@ember/service';
-import { merge, assign } from '@ember/polyfills';
+import { assign } from '@ember/polyfills';
 import { getOwner } from '@ember/application';
 
-const emberAssign = (typeof assign === 'function') ? assign : merge;
+const emberAssign = (typeof assign === 'function') ? assign : Object.assign;
 
 /**
  * The `EllaSparseService` makes it easy to materialize new `EllaSparseArray`
