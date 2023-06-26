@@ -33,7 +33,7 @@ While not all of Ember's enhanced array functionality is completely implemented
 yet, the parts of Emberella Sparse that do work pair nicely with
 [Emberella Treadmill](https://github.com/realityendshere/ella-treadmill).
 
-## Requirements
+## Compatibility
 
 * Ember.js v3.24 or above
 * Ember CLI v3.24 or above
@@ -52,14 +52,6 @@ From the root directory of your Ember project
 
 ```
 $ ember install ember-ella-sparse
-```
-
-### Plain NPM
-
-From the root directory of your Ember project
-
-```
-$ npm install ember-ella-sparse --save-dev
 ```
 
 ## Quickstart
