@@ -1,4 +1,5 @@
 /* eslint ember/named-functions-in-promises: 0 */
+/* eslint ember/no-get: 0 */
 
 import { run } from '@ember/runloop';
 import { get } from '@ember/object';
