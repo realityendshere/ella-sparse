@@ -3,7 +3,7 @@
 import Application from '@ember/application';
 import { get, set } from '@ember/object';
 import { run } from '@ember/runloop';
-import { merge, assign } from '@ember/polyfills';
+import { assign } from '@ember/polyfills';
 import { typeOf } from '@ember/utils';
 import { defer } from 'rsvp';
 import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
@@ -15,7 +15,7 @@ import { setupTest } from 'ember-qunit';
 import { later } from '@ember/runloop';
 import { settled } from '@ember/test-helpers';
 
-const emberAssign = (typeof assign === 'function') ? assign : merge;
+const assignFn = (typeof Object.assign === 'function') ? Object.assign : assign;
 let fetchSomeRecordsCalled = 0;
 
 const objectToParams = function(obj) {
@@ -31,7 +31,7 @@ const objectToParams = function(obj) {
 const fetchSomeRecords = function(range = {}, query = {}) {
   fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
 
-  query = emberAssign({
+  query = assignFn({
     limit: get(range, 'length'),
     offset: get(range, 'start')
   }, query);

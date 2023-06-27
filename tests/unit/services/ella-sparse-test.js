@@ -2,7 +2,7 @@
 
 import { run } from '@ember/runloop';
 import { get } from '@ember/object';
-import { merge, assign } from '@ember/polyfills';
+import { assign } from '@ember/polyfills';
 import { typeOf } from '@ember/utils';
 import { getOwner } from '@ember/application';
 
@@ -11,10 +11,10 @@ import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 import { settled } from '@ember/test-helpers';
 import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
-import { startMirage } from 'dummy/initializers/ember-cli-mirage';
+import { setupMirage } from 'ember-cli-mirage/test-support';
 import fetch from 'fetch';
 
-const emberAssign = (typeof assign === 'function') ? assign : merge;
+const assignFn = (typeof Object.assign === 'function') ? Object.assign : assign;
 
 let fetchSomeRecordsCalled = 0;
 
@@ -31,7 +31,7 @@ const objectToParams = function(obj) {
 const fetchSomeRecords = function(range = {}, query = {}) {
   fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
 
-  query = emberAssign({
+  query = assignFn({
     limit: get(range, 'length'),
     offset: get(range, 'start')
   }, query);
@@ -53,11 +53,11 @@ const fetchSomeRecords = function(range = {}, query = {}) {
 
 module('Unit | Service | ella sparse', function(hooks) {
   setupTest(hooks);
+  setupMirage(hooks);
 
   hooks.beforeEach(function() {
     fetchSomeRecordsCalled = 0;
 
-    this.server = startMirage();
     this.server.timing = 10;
 
     run(() => {

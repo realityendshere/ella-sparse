@@ -1,7 +1,19 @@
-export default function() {
-  this.namespace = 'api';
+import { discoverEmberDataModels } from 'ember-cli-mirage';
+import { createServer } from 'miragejs';
 
-  this.get('/words', function(schema, request) {
+/**
+ * Initializes Mirage
+ */
+export default function (config) {
+  return createServer({
+    ...config,
+    models: { ...discoverEmberDataModels(), ...config.models },
+    routes,
+  });
+}
+
+function routes() {
+  this.get('/api/words', function(schema, request) {
     let allWords = schema.words.all();
     let { offset, limit, q } = request.queryParams;
 
