@@ -11,7 +11,8 @@ import { module, test } from 'qunit';
 import destroyApp from '../../helpers/destroy-app';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
-
+import { setupTest } from 'ember-qunit';
+import { later } from '@ember/runloop';
 import { settled } from '@ember/test-helpers';
 
 const emberAssign = (typeof assign === 'function') ? assign : merge;
@@ -51,29 +52,22 @@ const fetchSomeRecords = function(range = {}, query = {}) {
 };
 
 module('Unit | Instance Initializer | ella sparse array', function(hooks) {
+  setupTest(hooks);
+
   hooks.beforeEach(function() {
     fetchSomeRecordsCalled = 0;
 
     this.server = startMirage();
     this.server.timing = 10;
-
-    run(() => {
-      this.application = Application.create();
-      this.appInstance = this.application.buildInstance();
-      initialize(this.appInstance);
-    });
   });
 
   hooks.afterEach(function() {
     this.server.shutdown();
-
-    run(this.appInstance, 'destroy');
-    destroyApp(this.application);
   });
 
   test('it uses a factory to create new instances', function(assert) {
     run(() => {
-      assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+      assert.ok(this.owner.factoryFor('ella-sparse:array').create());
     });
   });
 
@@ -81,7 +75,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(1);
 
     run(() => {
-      let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+      let arr = this.owner.factoryFor('ella-sparse:array').create();
 
       assert.equal(get(arr, 'ttl'), 36000000);
     });
@@ -91,7 +85,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(1);
 
     run(() => {
-      let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+      let arr = this.owner.factoryFor('ella-sparse:array').create();
 
       assert.equal(get(arr, 'limit'), 10);
     });
@@ -101,7 +95,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(1);
 
     run(() => {
-      let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+      let arr = this.owner.factoryFor('ella-sparse:array').create();
 
       assert.equal(get(arr, 'expired'), 0);
     });
@@ -111,7 +105,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(1);
 
     run(() => {
-      let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+      let arr = this.owner.factoryFor('ella-sparse:array').create();
 
       assert.equal(get(arr, 'enabled'), true);
     });
@@ -121,7 +115,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(1);
 
     run(() => {
-      let arr = this.appInstance.factoryFor('ella-sparse:array').create();
+      let arr = this.owner.factoryFor('ella-sparse:array').create();
 
       assert.equal(get(arr, 'isLength'), false);
     });
@@ -130,7 +124,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('it inits with loading: true', function(assert) {
     assert.expect(1);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -138,7 +132,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it automatically fetches the first "page" of results when computing "length"', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -160,7 +154,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('.objectAt initially returns loading SparseItems', function(assert) {
     assert.expect(2);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -176,7 +170,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('.objectAt initially returns stale SparseItems', function(assert) {
     assert.expect(2);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -191,7 +185,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let l = 42;
     let item;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -209,7 +203,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('`firstObject` returns object at index 0', function(assert) {
     assert.expect(2);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
     let item1 = get(arr, 'firstObject');
@@ -222,7 +216,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('`lastObject` returns object at index (length - 1)', function(assert) {
     assert.expect(3);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
     let l = 67;
@@ -242,7 +236,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it updates length when resolved with numeric total', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {
@@ -261,7 +255,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it updates length when resolved with parseable total', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {
@@ -280,7 +274,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it keeps existing length when resolved without a total', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {}
@@ -297,7 +291,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it keeps existing length when resolved with a negative total', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {
@@ -316,7 +310,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it keeps existing length when resolved with a total of Infinity', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {
@@ -335,7 +329,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   });
 
   test('it keeps existing length when resolved with an invalid total', function(assert) {
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function() {
         return {
@@ -358,7 +352,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let item1;
     let item2;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -379,7 +373,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let item1;
     let item2;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -400,7 +394,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let item1;
     let item2;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
       enabled: false
     });
@@ -421,7 +415,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(5);
 
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -443,7 +437,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(4);
 
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -469,7 +463,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(5);
 
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
       limit: 20
     });
@@ -494,7 +488,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
   test('its items init with __stale__: true; __stale__ becomes false once content loads', function(assert) {
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -524,7 +518,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(26);
 
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -577,7 +571,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('SparseItem __ttl__ inherits SparseArray ttl', function(assert) {
     assert.expect(2);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
       ttl: 50
     });
@@ -592,7 +586,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let deferred = defer();
     let item;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -601,7 +595,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
       item = arr.objectAt(0);
     });
 
-    run.later(function() {
+    later(function() {
       deferred.resolve();
     }, 50);
 
@@ -615,7 +609,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('SparseItem .shouldFetchContent initially returns true', function(assert) {
     assert.expect(1);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
     let item = arr.objectAt(37, { noFetch: true });
@@ -627,7 +621,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(4);
 
     let item;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -650,7 +644,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
 
     let item;
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -674,7 +668,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(6);
 
     let item;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -707,7 +701,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(4);
 
     let items;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -743,7 +737,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(2);
 
     let item;
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -764,7 +758,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('.filterBy causes isLength to become false', function(assert) {
     assert.expect(5);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -794,7 +788,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('Responses to previous filterBy objects are ignored', function(assert) {
     assert.expect(1);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -823,7 +817,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('.filterBy throws error when provided a non-object', function(assert) {
     assert.expect(3);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -843,7 +837,7 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
   test('.filter always throws an error', function(assert) {
     assert.expect(4);
 
-    let arr = this.appInstance.factoryFor('ella-sparse:array').create({
+    let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords
     });
 
@@ -870,17 +864,17 @@ module('Unit | Instance Initializer | ella sparse array', function(hooks) {
     assert.expect(3);
 
     run(() => {
-      assert.ok(this.appInstance.factoryFor('ella-sparse:array').create());
+      assert.ok(this.owner.factoryFor('ella-sparse:array').create());
     });
 
     assert.throws(function() {
-      this.appInstance.factoryFor('ella-sparse:array').create({
+      this.owner.factoryFor('ella-sparse:array').create({
         'on-fetch': 'not-a-function'
       });
     }, Error, 'throws an error when provided a string');
 
     assert.throws(function() {
-      this.appInstance.factoryFor('ella-sparse:array').create({
+      this.owner.factoryFor('ella-sparse:array').create({
         'on-fetch': null
       });
     }, Error, 'throws an error when provided null');
