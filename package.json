@@ -35,7 +35,7 @@
   "dependencies": {
     "ember-cli-babel": "^7.26.11",
     "ember-cli-htmlbars": "^6.0.1",
-    "ember-concurrency": "^1.3.0"
+    "ember-concurrency": "^2.3.7"
   },
   "devDependencies": {
     "@ember/optional-features": "^2.0.0",
@@ -49,17 +49,17 @@
     "ember-cli": "~4.4.1",
     "ember-cli-dependency-checker": "^3.3.1",
     "ember-cli-inject-live-reload": "^2.1.0",
-    "ember-cli-mirage": "^1.1.0",
+    "ember-cli-mirage": "^2.4.0",
     "ember-cli-sass": "^10.0.1",
     "ember-cli-sri": "^2.1.1",
     "ember-cli-terser": "^4.0.2",
     "ember-cli-version-checker": "^3.1.3",
-    "ember-data": "~3.28.13",
+    "ember-data": "~4.4.0",
     "ember-disable-prototype-extensions": "^1.1.3",
     "ember-ella-treadmill": "^0.21.0",
     "ember-export-application-global": "^2.0.1",
     "ember-fetch": "^8.1.2",
-    "ember-inflector": "^3.0.0",
+    "ember-inflector": "^4.0.2",
     "ember-load-initializers": "^2.1.2",
     "ember-page-title": "^7.0.0",
     "ember-qunit": "^5.1.5",
