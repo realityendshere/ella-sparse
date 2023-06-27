@@ -2,7 +2,7 @@ import Service from '@ember/service';
 import { assign } from '@ember/polyfills';
 import { getOwner } from '@ember/application';
 
-const assignFn = (typeof Object.assign === 'function') ? Object.assign : assign;
+const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
 /**
  * The `EllaSparseService` makes it easy to materialize new `EllaSparseArray`
@@ -45,7 +45,6 @@ const assignFn = (typeof Object.assign === 'function') ? Object.assign : assign;
  */
 
 export default Service.extend({
-
   /**
    * Instantiates a new `EllaSparseArray`.
    *
@@ -88,5 +87,5 @@ export default Service.extend({
     let factory = owner.factoryFor('ella-sparse:array');
 
     return factory.create(assignFn({ 'on-fetch': fn }, options));
-  }
+  },
 });

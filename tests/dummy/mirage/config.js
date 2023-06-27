@@ -13,7 +13,7 @@ export default function (config) {
 }
 
 function routes() {
-  this.get('/api/words', function(schema, request) {
+  this.get('/api/words', function (schema, request) {
     let allWords = schema.words.all();
     let { offset, limit, q } = request.queryParams;
 
@@ -39,8 +39,8 @@ function routes() {
     return {
       data: allWords.slice(offset, offset + limit).models,
       meta: {
-        total: allWords.length
-      }
+        total: allWords.length,
+      },
     };
   });
 }
