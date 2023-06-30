@@ -1,17 +1,15 @@
 import Controller from '@ember/controller';
 import { set } from '@ember/object';
-import { alias } from '@ember/object/computed';
+import { action } from '@ember/object';
 
-export default Controller.extend({
-  words: alias('model'),
+export default class IndexController extends Controller {
+  @action
+  handleScrollStart() {
+    set(this, 'model.enabled', false);
+  }
 
-  actions: {
-    handleScrollStart() {
-      set(this, 'model.enabled', false);
-    },
-
-    handleScrollEnd() {
-      set(this, 'model.enabled', true);
-    },
-  },
-});
+  @action
+  handleScrollEnd() {
+    set(this, 'model.enabled', true);
+  }
+}

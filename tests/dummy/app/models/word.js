@@ -1,7 +1,5 @@
-import DS from 'ember-data';
+import Model, { attr } from '@ember-data/model';
 
-const { attr } = DS;
-
-export default DS.Model.extend({
-  phrase: attr('string'),
-});
+export default class Word extends Model {
+  @attr('string') phrase;
+}

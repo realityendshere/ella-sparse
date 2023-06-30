@@ -1,19 +1,13 @@
-import { not, reads } from '@ember/object/computed';
-import EmberObject from '@ember/object';
 import EmberArray from '@ember/array';
-import {
-  computed,
-  get,
-  getProperties,
-  set,
-  setProperties,
-} from '@ember/object';
+import EmberObject from '@ember/object';
+import ObjectProxy from '@ember/object/proxy';
+import { get, set, setProperties } from '@ember/object';
 import { A } from '@ember/array';
 import { assert } from '@ember/debug';
 import { Promise } from 'rsvp';
-import { typeOf } from '@ember/utils';
-import ObjectProxy from '@ember/object/proxy';
 import { task } from 'ember-concurrency';
+import { tracked } from '@glimmer/tracking';
+import { typeOf } from '@ember/utils';
 
 const DEFAULT_TTL = 36000000;
 
@@ -50,12 +44,7 @@ const ON_FETCH_FN = function () {
  * @uses Ember.Array
  * @public
  */
-
-const EllaSparseArray = EmberObject.extend(EmberArray, {
-  __onFetch__: computed(function () {
-    return ON_FETCH_FN;
-  }),
-
+class EllaSparseArray extends EmberObject.extend(EmberArray) {
   /**
    * The internal length property.
    *
@@ -64,7 +53,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default null
    * @private
    */
-  _length: null,
+  @tracked _length = null;
 
   /**
    * When `true`, the `enabled` property allows the `EllaSparseArray` instance
@@ -77,7 +66,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default true
    * @public
    */
-  enabled: true,
+  enabled = true;
 
   /**
    * A Javascript timestamp. Any items last resolved before the timestamp
@@ -88,7 +77,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default 0
    * @public
    */
-  expired: 0,
+  expired = 0;
 
   /**
    * The number of items to fetch together on a "page."
@@ -98,7 +87,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default 10
    * @public
    */
-  limit: 10,
+  limit = 10;
 
   /**
    * The number of ms to wait until previously fetched content gets marked
@@ -109,7 +98,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default 36000000
    * @public
    */
-  ttl: DEFAULT_TTL,
+  ttl = DEFAULT_TTL;
 
   /**
    * The content of this sparse array. Plot twist: it's actually an object.
@@ -120,9 +109,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  data: computed(function () {
-    return {};
-  }).readOnly(),
+  data = null;
 
   /**
    * Indicates if the provided length of this "array" is available and valid.
@@ -133,11 +120,11 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  isLength: computed('_length', function () {
-    let _length = parseInt(this._length, 10);
+  get isLength() {
+    const _length = parseInt(this._length, 10);
 
     return !isNaN(_length);
-  }).readOnly(),
+  }
 
   /**
    * This is a "quacks like a duck" property to help quickly identify instances
@@ -150,9 +137,9 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @readOnly
    * @final
    */
-  isSparseArray: computed(function () {
+  get isSparseArray() {
     return true;
-  }).readOnly(),
+  }
 
   /**
    * Returns the item at the index `length - 1`.
@@ -162,15 +149,11 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    * @readOnly
    */
-  lastObject: computed('length', function () {
-    let len = this.length;
+  get lastObject() {
+    const { length } = this;
 
-    if (len === 0) {
-      return undefined;
-    }
-
-    return this.objectAt(len - 1);
-  }).readOnly(),
+    return length === 0 ? undefined : this.objectAt(length - 1);
+  }
 
   /**
    * Reports the expected length of this sparse array.
@@ -180,23 +163,13 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @default 0
    * @public
    */
-  length: computed('_length', 'loading', 'remoteQuery', {
-    get() {
-      if (this.loading) {
-        this.fetchObjectAt(0);
+  get length() {
+    return this.loading ? 0 : this._length;
+  }
 
-        return 0;
-      }
-
-      return this._length;
-    },
-
-    set(key, value) {
-      this.notifyPropertyChange('[]');
-
-      return set(this, '_length', value);
-    },
-  }),
+  set length(value) {
+    set(this, '_length', value);
+  }
 
   /**
    * The array itself is considered `loading` when the `length` is unknown.
@@ -207,7 +180,9 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @readOnly
    * @public
    */
-  loading: not('isLength').readOnly(),
+  get loading() {
+    return !this.isLength;
+  }
 
   /**
    * The on-fetch function is called each time a block of records must be
@@ -227,20 +202,35 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @type {Function}
    * @public
    */
-  'on-fetch': reads('__onFetch__'),
+  'on-fetch' = ON_FETCH_FN;
 
-  init() {
-    this._super();
+  static create(props) {
+    const instance = new this(props);
 
+    Object.assign(instance, props);
+    instance.initialize();
+
+    return instance;
+  }
+
+  constructor() {
+    super(...arguments);
+
+    this.data = {};
+
+    return this;
+  }
+
+  initialize() {
     assert(
       '`on-fetch` must be a function',
       typeof this['on-fetch'] === 'function'
     );
 
-    this.length;
-
-    return this;
-  },
+    if (this.loading) {
+      this.fetchObjectAt(0);
+    }
+  }
 
   /**
    * Mark all items as stale. Useful when `length` changes or it seems likely
@@ -255,7 +245,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     set(this, 'expired', Date.now());
 
     return this;
-  },
+  }
 
   /**
    * Initiate the retrieval of content at a specified index. If
@@ -269,7 +259,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @public
    */
   fetchObjectAt(idx, options = {}) {
-    let { noFetch } = options;
+    const { noFetch } = options;
 
     idx = parseInt(idx, 10);
 
@@ -278,13 +268,13 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     }
 
     return this._fetchObjectAt(idx);
-  },
+  }
 
   filter() {
     assert('filter() not supported in sparse arrays. Use filterBy instead.');
 
     return this;
-  },
+  }
 
   /**
    * Set query parameters to pass along to the data fetching function. Updating
@@ -307,10 +297,10 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       _length: null,
     });
 
-    this.length;
+    this.fetchObjectAt(0);
 
     return this;
-  },
+  }
 
   /**
    * Inject data into the sparse array at the specified range.
@@ -333,10 +323,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       }
     }
 
-    this.notifyPropertyChange('[]');
-
     return this;
-  },
+  }
 
   /**
    * Compare an object with the current `remoteQuery` value.
@@ -350,7 +338,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     let current = this.remoteQuery;
 
     return JSON.stringify(obj) === JSON.stringify(current);
-  },
+  }
 
   /**
    * Get the content at a specified index.
@@ -373,7 +361,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       return undefined;
     }
 
-    let { isLength, length } = getProperties(this, 'isLength', 'length');
+    const { isLength, length } = this;
     let item;
 
     if (isLength && idx >= length) {
@@ -387,7 +375,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     }
 
     return this.fetchObjectAt(idx, options);
-  },
+  }
 
   /**
    * Return a dot-delimited path to use with `Ember.get`.
@@ -399,7 +387,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    */
   pathToIndex(idx) {
     return ['data', idx].join('.');
-  },
+  }
 
   /**
    * Return the `EllaSparseItem` instance at the given index.
@@ -414,7 +402,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    */
   sparseObjectAt(idx) {
     return this.data[idx] || this._insertSparseItem(idx);
-  },
+  }
 
   /**
    * Eject the content at the specified index(es). Accepts multiple arguments.
@@ -432,7 +420,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     });
 
     return this;
-  },
+  }
 
   /**
    * Assemble the range and query objects. Place the items in the specified
@@ -444,8 +432,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _didRequestRange(range) {
+    const { remoteQuery } = this;
     let fn = this['on-fetch'];
-    let query = this.remoteQuery;
 
     this._startFetchingContentInRange(range);
 
@@ -453,8 +441,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
       fn = ON_FETCH_FN;
     }
 
-    return fn(range, query);
-  },
+    return fn(range, remoteQuery);
+  }
 
   /**
    * Trigger a `fetchTask` to retrieve data for a given index.
@@ -477,7 +465,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     });
 
     return this.sparseObjectAt(idx);
-  },
+  }
 
   /**
    * Create a new `EllaSparseItem` at a specified index.
@@ -488,12 +476,12 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
    * @private
    */
   _insertSparseItem(idx) {
-    this.data[idx] = EllaSparseItem.create({
+    this.data[idx] = new EllaSparseItem({
       __ttl__: this.ttl,
     });
 
     return get(this, this.pathToIndex(idx));
-  },
+  }
 
   /**
    * Handle data fetching errors.
@@ -515,7 +503,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
         item.reportError(err);
       }
     }
-  },
+  }
 
   /**
    * Marks items in the specified range as in progress.
@@ -532,7 +520,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
         item.fetchingContent.perform();
       }
     }
-  },
+  }
 
   /**
    * Clears the content of the item at the specified index.
@@ -556,19 +544,18 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     }
 
     return this;
-  },
+  }
 
-  fetchTask: task(function* (range) {
+  fetchTask = task(async (range) => {
     try {
-      let { data, total } = yield this._didRequestRange(range);
+      const { data, total } = await this._didRequestRange(range);
+      const totalInt = parseInt(total, 10);
 
-      total = parseInt(total, 10);
-
-      if (!isNaN(total) && total >= 0 && total !== Infinity) {
-        set(this, 'length', total);
+      if (!isNaN(totalInt) && totalInt >= 0 && totalInt !== Infinity) {
+        set(this, 'length', totalInt);
       } else {
         assert(
-          `Numeric, non-negative "total" is required! ({ total: ${total} })`
+          `Numeric, non-negative "total" is required! ({ total: ${totalInt} })`
         );
       }
 
@@ -576,8 +563,8 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
     } catch (e) {
       this._requestRangeFailed(range, e);
     }
-  }),
-});
+  });
+}
 
 /**
  * An individual item for an `EllaSparseArray`. Each item offers an
@@ -589,8 +576,7 @@ const EllaSparseArray = EmberObject.extend(EmberArray, {
  * @extends {Ember.ObjectProxy}
  * @private
  */
-
-const EllaSparseItem = ObjectProxy.extend({
+class EllaSparseItem extends ObjectProxy {
   /**
    * A Javascript timestamp indicating the last time this item's content was
    * resolved. Used along with the `__ttl__` property to identify and refetch
@@ -601,7 +587,7 @@ const EllaSparseItem = ObjectProxy.extend({
    * @default 0
    * @public
    */
-  __lastFetch__: 0,
+  @tracked __lastFetch__ = 0;
 
   /**
    * The number of ms to wait until previously fetched content gets marked
@@ -612,7 +598,7 @@ const EllaSparseItem = ObjectProxy.extend({
    * @default 36000000
    * @public
    */
-  __ttl__: DEFAULT_TTL,
+  @tracked __ttl__ = DEFAULT_TTL;
 
   /**
    * Hook for rejecting the content retrieval promise. The `fetchingContent`
@@ -623,7 +609,7 @@ const EllaSparseItem = ObjectProxy.extend({
    * @default null
    * @public
    */
-  reportError: null,
+  reportError = null;
 
   /**
    * Hook for resolving the content retrieval promise. The `fetchingContent`
@@ -634,7 +620,7 @@ const EllaSparseItem = ObjectProxy.extend({
    * @default null
    * @public
    */
-  resolveContent: null,
+  resolveContent = null;
 
   /**
    * Returns `true` when the `fetchingContent` task has never been performed
@@ -646,12 +632,12 @@ const EllaSparseItem = ObjectProxy.extend({
    * @public
    * @readOnly
    */
-  is_loading: computed('fetchingContent.{performCount,isRunning}', function () {
+  get is_loading() {
     return Boolean(
       get(this, 'fetchingContent.isRunning') ||
         get(this, 'fetchingContent.performCount') === 0
     );
-  }).readOnly(),
+  }
 
   /**
    * This is a "quacks like a duck" property to help quickly identify instances
@@ -664,9 +650,30 @@ const EllaSparseItem = ObjectProxy.extend({
    * @readOnly
    * @final
    */
-  isSparseItem: computed(function () {
+  get isSparseItem() {
     return true;
-  }).readOnly(),
+  }
+
+  /**
+   * Indicates the content managed by this item should be refetched.
+   *
+   * @property __stale__
+   * @type {Boolean}
+   * @default true
+   * @readOnly
+   * @public
+   */
+  get __stale__() {
+    return Boolean(this.__lastFetch__ + this.__ttl__ <= Date.now());
+  }
+
+  constructor(options) {
+    super(...arguments);
+
+    this.__ttl__ = options.__ttl__;
+
+    return this;
+  }
 
   /**
    * Determines if content managed by this object proxy is valid, stale,
@@ -687,7 +694,7 @@ const EllaSparseItem = ObjectProxy.extend({
     }
 
     return Boolean(this.__stale__ || this.__lastFetch__ <= timestamp);
-  },
+  }
 
   /**
    * Remove the content managed by this item instance and ensure the item
@@ -703,44 +710,31 @@ const EllaSparseItem = ObjectProxy.extend({
     });
 
     return this;
-  },
+  }
 
   __fetchContent() {
     return new Promise((resolve, reject) => {
       this.reportError = reject;
       this.resolveContent = resolve;
     });
-  },
+  }
 
-  fetchingContent: task(function* () {
+  fetchingContent = task({ drop: true }, async () => {
     setProperties(this, { content: null });
 
-    let content = yield this.__fetchContent();
+    let content = await this.__fetchContent();
 
     setProperties(this, {
       content: content,
       __lastFetch__: Date.now(),
     });
-  }).drop(),
-});
-
-/**
- * Indicates the content managed by this item should be refetched.
- *
- * @property __stale__
- * @type {Boolean}
- * @default true
- * @readOnly
- * @public
- */
-Object.defineProperty(EllaSparseItem.prototype, '__stale__', {
-  get() {
-    return Boolean(this.__lastFetch__ + this.__ttl__ <= Date.now());
-  },
-});
+  });
+}
 
 export function initialize(appInstance) {
-  appInstance.register('ella-sparse:array', EllaSparseArray);
+  appInstance.register('ella-sparse:array', EllaSparseArray, {
+    instantiate: false,
+  });
 }
 
 export default {

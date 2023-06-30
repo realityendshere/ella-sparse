@@ -44,7 +44,7 @@ const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
  * @public
  */
 
-export default Service.extend({
+export default class EllaSparseService extends Service {
   /**
    * Instantiates a new `EllaSparseArray`.
    *
@@ -83,9 +83,9 @@ export default Service.extend({
    * @public
    */
   array(fn, options = {}) {
-    let owner = getOwner(this);
-    let factory = owner.factoryFor('ella-sparse:array');
+    const owner = getOwner(this);
+    const factory = owner.factoryFor('ella-sparse:array');
 
     return factory.create(assignFn({ 'on-fetch': fn }, options));
-  },
-});
+  }
+}

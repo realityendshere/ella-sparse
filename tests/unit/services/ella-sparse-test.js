@@ -105,18 +105,18 @@ module('Unit | Service | ella sparse', function (hooks) {
       item2 = arr.objectAt(314);
     });
 
-    assert.equal(fetchSomeRecordsCalled, 2);
+    assert.strictEqual(fetchSomeRecordsCalled, 2);
 
     return settled().then(() => {
-      assert.equal(get(item1, 'phrase'), 'ossified combine');
-      assert.equal(get(item2, 'phrase'), 'peaceful cloister');
+      assert.strictEqual(get(item1, 'phrase'), 'ossified combine');
+      assert.strictEqual(get(item2, 'phrase'), 'peaceful cloister');
     });
   });
 
   test('.array sets "ttl" property on instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords, { ttl: 50 });
 
-    assert.equal(arr.ttl, 50);
+    assert.strictEqual(arr.ttl, 50);
   });
 
   test('.array sets "enabled" property on instance of EllaSparseArray', function (assert) {
@@ -128,6 +128,6 @@ module('Unit | Service | ella sparse', function (hooks) {
   test('.array sets "length" property on instance of EllaSparseArray', function (assert) {
     let arr = this.service.array(fetchSomeRecords, { length: 1000 });
 
-    assert.equal(arr.length, 1000);
+    assert.strictEqual(arr.length, 1000);
   });
 });

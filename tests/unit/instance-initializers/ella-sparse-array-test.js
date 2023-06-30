@@ -1,15 +1,12 @@
 /* eslint ember/named-functions-in-promises: 0 */
 /* eslint ember/no-get: 0 */
 
-import Application from '@ember/application';
 import { get, set } from '@ember/object';
 import { run } from '@ember/runloop';
 import { assign } from '@ember/polyfills';
 import { typeOf } from '@ember/utils';
 import { defer } from 'rsvp';
-import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
 import { module, test } from 'qunit';
-import destroyApp from '../../helpers/destroy-app';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import fetch from 'fetch';
 import { setupTest } from 'ember-qunit';
@@ -75,6 +72,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it uses a factory to create new instances', function (assert) {
+    assert.expect(1);
+
     run(() => {
       assert.ok(this.owner.factoryFor('ella-sparse:array').create());
     });
@@ -86,7 +85,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     run(() => {
       let arr = this.owner.factoryFor('ella-sparse:array').create();
 
-      assert.equal(arr.ttl, 36000000);
+      assert.strictEqual(arr.ttl, 36000000);
     });
   });
 
@@ -96,7 +95,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     run(() => {
       let arr = this.owner.factoryFor('ella-sparse:array').create();
 
-      assert.equal(arr.limit, 10);
+      assert.strictEqual(arr.limit, 10);
     });
   });
 
@@ -106,7 +105,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     run(() => {
       let arr = this.owner.factoryFor('ella-sparse:array').create();
 
-      assert.equal(arr.expired, 0);
+      assert.strictEqual(arr.expired, 0);
     });
   });
 
@@ -141,6 +140,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it automatically fetches the first "page" of results when computing "length"', function (assert) {
+    assert.expect(4);
+
     let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
@@ -152,10 +153,10 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       assert.true(arr.loading);
     });
 
-    assert.equal(fetchSomeRecordsCalled, 1);
+    assert.strictEqual(fetchSomeRecordsCalled, 1);
 
     return settled().then(() => {
-      assert.equal(arr.length, 1001);
+      assert.strictEqual(arr.length, 1001);
       assert.false(arr.loading);
     });
   });
@@ -219,7 +220,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     let item2 = arr.objectAt(0);
 
     assert.true(item1.isSparseItem);
-    assert.equal(item1, item2);
+    assert.strictEqual(item1, item2);
   });
 
   test('`lastObject` returns object at index (length - 1)', function (assert) {
@@ -241,7 +242,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     let item2 = arr.objectAt(l - 1);
 
     assert.true(item1.isSparseItem);
-    assert.equal(item1, item2);
+    assert.strictEqual(item1, item2);
   });
 
   test('it updates length when resolved with numeric total', function (assert) {
@@ -254,13 +255,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 622);
+    assert.strictEqual(arr.length, 622);
   });
 
   test('it updates length when resolved with parseable total', function (assert) {
@@ -273,13 +274,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 1003);
+    assert.strictEqual(arr.length, 1003);
   });
 
   test('it keeps existing length when resolved without a total', function (assert) {
@@ -290,13 +291,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
   });
 
   test('it keeps existing length when resolved with a negative total', function (assert) {
@@ -309,13 +310,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
   });
 
   test('it keeps existing length when resolved with a total of Infinity', function (assert) {
@@ -328,13 +329,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
   });
 
   test('it keeps existing length when resolved with an invalid total', function (assert) {
@@ -347,13 +348,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       },
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
 
     run(() => {
       arr.objectAt(120);
     });
 
-    assert.equal(arr.length, 505);
+    assert.strictEqual(arr.length, 505);
   });
 
   test('its item properties are updated once fetched', function (assert) {
@@ -372,8 +373,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
 
     return settled().then(() => {
-      assert.equal(get(item1, 'phrase'), 'brainy carnation');
-      assert.equal(get(item2, 'phrase'), 'obeisant bunghole');
+      assert.strictEqual(get(item1, 'phrase'), 'brainy carnation');
+      assert.strictEqual(get(item2, 'phrase'), 'obeisant bunghole');
     });
   });
 
@@ -434,11 +435,11 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
 
     return settled().then(() => {
-      assert.equal(get(items[0], 'phrase'), 'smell blueberry');
-      assert.equal(get(items[1], 'phrase'), 'rot pickle');
-      assert.equal(get(items[2], 'phrase'), 'superficial anesthesiology');
-      assert.equal(get(items[3], 'phrase'), 'clip boxer');
-      assert.equal(get(items[4], 'phrase'), 'protect daisy');
+      assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
+      assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
+      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
+      assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
+      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
     });
   });
 
@@ -454,17 +455,17 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       items = arr.objectsAt([0, 9]);
     });
 
-    assert.equal(fetchSomeRecordsCalled, 1);
+    assert.strictEqual(fetchSomeRecordsCalled, 1);
 
     return settled().then(() => {
-      assert.equal(get(items[0], 'phrase'), 'brainy carnation');
-      assert.equal(get(items[1], 'phrase'), 'outgoing graph');
+      assert.strictEqual(get(items[0], 'phrase'), 'brainy carnation');
+      assert.strictEqual(get(items[1], 'phrase'), 'outgoing graph');
 
       run(() => {
         arr.objectAt(19);
       });
 
-      assert.equal(
+      assert.strictEqual(
         fetchSomeRecordsCalled,
         2,
         'additional call to fetch page 2'
@@ -485,21 +486,21 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       items = arr.objectsAt([0, 9]);
     });
 
-    assert.equal(fetchSomeRecordsCalled, 1);
+    assert.strictEqual(fetchSomeRecordsCalled, 1);
 
     return settled().then(() => {
-      assert.equal(get(items[0], 'phrase'), 'brainy carnation');
-      assert.equal(get(items[1], 'phrase'), 'outgoing graph');
+      assert.strictEqual(get(items[0], 'phrase'), 'brainy carnation');
+      assert.strictEqual(get(items[1], 'phrase'), 'outgoing graph');
 
       run(() => {
-        assert.equal(
+        assert.strictEqual(
           get(arr.objectAt(19), 'phrase'),
           'precede average',
           'item 20 already fetched'
         );
       });
 
-      assert.equal(
+      assert.strictEqual(
         fetchSomeRecordsCalled,
         1,
         'no additional call to fetch method'
@@ -508,6 +509,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('its items init with __stale__: true; __stale__ becomes false once content loads', function (assert) {
+    assert.expect(12);
+
     let items;
     let arr = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
@@ -556,29 +559,29 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       assert.false(items[4].__stale__);
       assert.false(items[5].__stale__);
 
-      assert.equal(get(items[0], 'phrase'), 'smell blueberry');
-      assert.equal(get(items[1], 'phrase'), 'rot pickle');
-      assert.equal(get(items[2], 'phrase'), 'superficial anesthesiology');
-      assert.equal(get(items[3], 'phrase'), 'clip boxer');
-      assert.equal(get(items[4], 'phrase'), 'protect daisy');
-      assert.equal(get(items[5], 'phrase'), 'brush tablecloth');
+      assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
+      assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
+      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
+      assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
+      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
+      assert.strictEqual(get(items[5], 'phrase'), 'brush tablecloth');
 
       arr.unset(7);
 
-      assert.equal(get(items[4], 'phrase'), 'protect daisy');
-      assert.equal(get(items[5], 'phrase'), undefined);
+      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
+      assert.strictEqual(get(items[5], 'phrase'), undefined);
 
       arr.unset(3, 4, 5);
 
-      assert.equal(get(items[0], 'phrase'), undefined);
-      assert.equal(get(items[1], 'phrase'), undefined);
-      assert.equal(get(items[2], 'phrase'), 'superficial anesthesiology');
+      assert.strictEqual(get(items[0], 'phrase'), undefined);
+      assert.strictEqual(get(items[1], 'phrase'), undefined);
+      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
 
       arr.unset([567], [456, [901, 6, 8]]);
 
-      assert.equal(get(items[2], 'phrase'), undefined);
-      assert.equal(get(items[3], 'phrase'), undefined);
-      assert.equal(get(items[4], 'phrase'), undefined);
+      assert.strictEqual(get(items[2], 'phrase'), undefined);
+      assert.strictEqual(get(items[3], 'phrase'), undefined);
+      assert.strictEqual(get(items[4], 'phrase'), undefined);
 
       assert.true(items[0].__stale__);
       assert.true(items[1].__stale__);
@@ -598,8 +601,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
     let item = arr.objectAt(0);
 
-    assert.equal(item.__ttl__, arr.ttl);
-    assert.equal(item.__ttl__, 50);
+    assert.strictEqual(item.__ttl__, arr.ttl);
+    assert.strictEqual(item.__ttl__, 50);
   });
 
   test('SparseItem appears stale after ttl ms', function (assert) {
@@ -669,7 +672,11 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       'on-fetch': fetchSomeRecords,
     });
 
-    assert.equal(fetchSomeRecordsCalled, 1, 'automatically fetch first page');
+    assert.strictEqual(
+      fetchSomeRecordsCalled,
+      1,
+      'automatically fetch first page'
+    );
 
     run(() => {
       arr.length;
@@ -679,9 +686,9 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
 
     return settled().then(() => {
-      assert.equal(get(items[2], 'phrase'), 'cheap milk');
-      assert.equal(get(item, 'phrase'), 'outgoing graph');
-      assert.equal(
+      assert.strictEqual(get(items[2], 'phrase'), 'cheap milk');
+      assert.strictEqual(get(item, 'phrase'), 'outgoing graph');
+      assert.strictEqual(
         fetchSomeRecordsCalled,
         1,
         'used cached results from first page'
@@ -736,7 +743,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
 
     return settled().then(() => {
-      assert.equal(fetchSomeRecordsCalled, 1);
+      assert.strictEqual(fetchSomeRecordsCalled, 1);
 
       let before0 = items[0].__lastFetch__;
       let before1 = items[1].__lastFetch__;
@@ -747,7 +754,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       });
 
       return settled().then(() => {
-        assert.equal(fetchSomeRecordsCalled, 2);
+        assert.strictEqual(fetchSomeRecordsCalled, 2);
 
         let after0 = items[0].__lastFetch__;
         let after1 = items[1].__lastFetch__;
@@ -776,7 +783,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     assert.deepEqual(query, arr.remoteQuery);
 
     return settled().then(() => {
-      assert.equal(get(item, 'phrase'), 'charming snowboarding');
+      assert.strictEqual(get(item, 'phrase'), 'charming snowboarding');
     });
   });
 
@@ -835,7 +842,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     });
 
     return settled().then(() => {
-      assert.equal(arr.length, 2);
+      assert.strictEqual(arr.length, 2);
     });
   });
 

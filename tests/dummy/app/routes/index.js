@@ -1,19 +1,19 @@
 import Route from '@ember/routing/route';
-import { get, set } from '@ember/object';
-import { merge, assign } from '@ember/polyfills';
+import { assign } from '@ember/polyfills';
 import { inject as service } from '@ember/service';
+import { set } from '@ember/object';
 
-const emberAssign = typeof assign === 'function' ? assign : merge;
+const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
-export default Route.extend({
-  ellaSparse: service('ella-sparse'),
+class IndexRoute extends Route {
+  ellaSparse = service('ella-sparse');
 
   model() {
     let store = this.store;
 
     return this.ellaSparse.array(
       (range = {}, query = {}) => {
-        query = emberAssign(
+        query = assignFn(
           {
             limit: range.length,
             offset: range.start,
@@ -24,7 +24,7 @@ export default Route.extend({
         let handler = (result) => {
           return {
             data: result,
-            total: get(result, 'meta.total'),
+            total: result?.meta?.total || 0,
           };
         };
 
@@ -34,9 +34,11 @@ export default Route.extend({
         ttl: 600000,
       }
     );
-  },
+  }
 
   setupController(controller, model) {
     set(controller, 'words', model);
-  },
-});
+  }
+}
+
+export default IndexRoute;
