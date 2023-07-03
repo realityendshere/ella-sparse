@@ -6,13 +6,14 @@ import { set } from '@ember/object';
 const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
 class IndexRoute extends Route {
-  ellaSparse = service('ella-sparse');
+  @service ellaSparse;
+  @service store;
 
   model() {
-    let store = this.store;
+    const { store, ellaSparse } = this;
 
-    return this.ellaSparse.array(
-      (range = {}, query = {}) => {
+    return ellaSparse.array(
+      async (range = {}, query = {}) => {
         query = assignFn(
           {
             limit: range.length,
@@ -21,14 +22,12 @@ class IndexRoute extends Route {
           query
         );
 
-        let handler = (result) => {
-          return {
-            data: result,
-            total: result?.meta?.total || 0,
-          };
-        };
+        const result = await store.query('word', query);
 
-        return store.query('word', query).then(handler);
+        return {
+          data: result,
+          total: result?.meta?.total || 0,
+        };
       },
       {
         ttl: 600000,

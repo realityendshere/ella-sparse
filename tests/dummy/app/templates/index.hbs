@@ -1,5 +1,5 @@
 {{#ella-treadmill
-  content=this.model
+  content=this.words
   row="5em"
   on-scroll-start=this.handleScrollStart
   on-scroll-end=this.handleScrollEnd
@@ -13,7 +13,7 @@
     </p>
   {{/if}}
 {{else}}
-  {{#if this.model.loading}}
+  {{#if this.words.loading}}
     Loading...
   {{else}}
     <p>Nothing to see here.</p>

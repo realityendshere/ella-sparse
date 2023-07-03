@@ -28,7 +28,7 @@ function routes() {
       });
     }
 
-    if (request.requestHeaders.accept === 'application/vnd.api+json') {
+    if (request.requestHeaders.Accept === 'application/vnd.api+json') {
       let json = this.serialize(allWords.slice(offset, offset + limit));
 
       json.meta = { total: allWords.length };

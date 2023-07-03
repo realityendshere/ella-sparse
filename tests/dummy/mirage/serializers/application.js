@@ -1,11 +1,3 @@
-import { JSONAPISerializer } from 'ember-cli-mirage';
+import { JSONAPISerializer } from 'miragejs';
 
-export default JSONAPISerializer.extend({
-  serialize(object) {
-    let json = JSONAPISerializer.prototype.serialize.apply(this, arguments);
-
-    json.meta = object.meta;
-
-    return json;
-  },
-});
+export default JSONAPISerializer.extend();
