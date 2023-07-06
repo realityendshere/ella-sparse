@@ -552,7 +552,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       const totalInt = parseInt(total, 10);
 
       if (!isNaN(totalInt) && totalInt >= 0 && totalInt !== Infinity) {
-        set(this, 'length', totalInt);
+        set(this, '_length', totalInt);
       } else {
         assert(
           `Numeric, non-negative "total" is required! ({ total: ${totalInt} })`
