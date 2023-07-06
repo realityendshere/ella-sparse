@@ -1,7 +1,6 @@
 import Route from '@ember/routing/route';
 import { assign } from '@ember/polyfills';
 import { inject as service } from '@ember/service';
-import { set } from '@ember/object';
 
 const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
@@ -33,10 +32,6 @@ class IndexRoute extends Route {
         ttl: 600000,
       }
     );
-  }
-
-  setupController(controller, model) {
-    set(controller, 'words', model);
   }
 }
 
