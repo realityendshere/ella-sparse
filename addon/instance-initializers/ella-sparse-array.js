@@ -370,11 +370,11 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
 
     item = this.sparseObjectAt(idx);
 
-    if (item && item.shouldFetchContent(this.expired) !== true) {
-      return item;
+    if (item?.shouldFetchContent(this.expired) === true) {
+      return this.fetchObjectAt(idx, options);
     }
 
-    return this.fetchObjectAt(idx, options);
+    return item;
   }
 
   /**
@@ -453,16 +453,16 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @private
    */
   _fetchObjectAt(idx) {
-    let limit = parseInt(this.limit, 10) || 1;
-    let pageIdx = Math.floor(idx / limit);
-    let start = pageIdx * limit;
-    start = Math.max(start, 0);
-
-    this.fetchTask.perform({
+    const limit = parseInt(this.limit, 10) || 1;
+    const pageIdx = Math.floor(idx / limit);
+    const start = Math.max(pageIdx * limit, 0);
+    const range = {
       start: start,
       length: limit,
       page: pageIdx + 1,
-    });
+    };
+
+    this.fetchTask.perform(range);
 
     return this.sparseObjectAt(idx);
   }
@@ -517,7 +517,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       let item = this.sparseObjectAt(i);
 
       if (item) {
-        item.fetchingContent.perform();
+        item.fetchContent();
       }
     }
   }
@@ -689,7 +689,7 @@ class EllaSparseItem extends ObjectProxy {
    * @public
    */
   shouldFetchContent(timestamp = 0) {
-    if (get(this, 'fetchingContent.isRunning')) {
+    if (this.fetchingContent.isRunning) {
       return false;
     }
 
@@ -717,6 +717,10 @@ class EllaSparseItem extends ObjectProxy {
       this.reportError = reject;
       this.resolveContent = resolve;
     });
+  }
+
+  fetchContent() {
+    return this.fetchingContent.perform();
   }
 
   fetchingContent = task({ drop: true }, async () => {
