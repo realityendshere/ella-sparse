@@ -1,15 +1,17 @@
 import EmberArray from '@ember/array';
 import EmberObject from '@ember/object';
 import ObjectProxy from '@ember/object/proxy';
-import { get, set, setProperties } from '@ember/object';
 import { A } from '@ember/array';
 import { assert } from '@ember/debug';
+import { get, set, setProperties } from '@ember/object';
+import { guidFor } from '@ember/object/internals';
 import { Promise } from 'rsvp';
-import { task } from 'ember-concurrency';
+import { task, timeout } from 'ember-concurrency';
 import { tracked } from '@glimmer/tracking';
 import { typeOf } from '@ember/utils';
 
 const DEFAULT_TTL = 36000000;
+const DEFAULT_FETCH_THROTTLE = 20;
 
 const ON_FETCH_FN = function () {
   assert(
@@ -88,6 +90,8 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   limit = 10;
+
+  throttle = DEFAULT_FETCH_THROTTLE;
 
   /**
    * The number of ms to wait until previously fetched content gets marked
@@ -371,7 +375,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
     item = this.sparseObjectAt(idx);
 
     if (item?.shouldFetchContent(this.expired) === true) {
-      return this.fetchObjectAt(idx, options);
+      this.fetchObjectAt(idx, options);
     }
 
     return item;
@@ -547,7 +551,17 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
   }
 
   fetchTask = task(async (range) => {
+    const rangeKey = JSON.stringify(range);
+
+    this.fetchingRanges = this.fetchingRanges || [];
+
+    if (this.fetchingRanges.includes(rangeKey)) return;
+
     try {
+      this.fetchingRanges.push(rangeKey);
+
+      await timeout(this.throttle);
+
       const { data, total } = await this._didRequestRange(range);
       const totalInt = parseInt(total, 10);
 
@@ -560,6 +574,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       }
 
       this.fulfill(range, data);
+      this.fetchingRanges.splice(this.fetchingRanges.indexOf(rangeKey), 1);
     } catch (e) {
       this._requestRangeFailed(range, e);
     }
@@ -577,6 +592,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
  * @private
  */
 class EllaSparseItem extends ObjectProxy {
+  guid = guidFor(this);
   /**
    * A Javascript timestamp indicating the last time this item's content was
    * resolved. Used along with the `__ttl__` property to identify and refetch
@@ -587,7 +603,7 @@ class EllaSparseItem extends ObjectProxy {
    * @default 0
    * @public
    */
-  @tracked __lastFetch__ = 0;
+  __lastFetch__ = 0;
 
   /**
    * The number of ms to wait until previously fetched content gets marked
@@ -689,9 +705,7 @@ class EllaSparseItem extends ObjectProxy {
    * @public
    */
   shouldFetchContent(timestamp = 0) {
-    if (this.fetchingContent.isRunning) {
-      return false;
-    }
+    if (get(this, 'fetchingContent.isRunning')) return false;
 
     return Boolean(this.__stale__ || this.__lastFetch__ <= timestamp);
   }
