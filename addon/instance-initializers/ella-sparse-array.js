@@ -6,12 +6,11 @@ import { assert } from '@ember/debug';
 import { get, set, setProperties } from '@ember/object';
 import { guidFor } from '@ember/object/internals';
 import { Promise } from 'rsvp';
-import { task, timeout } from 'ember-concurrency';
+import { task, animationFrame } from 'ember-concurrency';
 import { tracked } from '@glimmer/tracking';
 import { typeOf } from '@ember/utils';
 
 const DEFAULT_TTL = 36000000;
-const DEFAULT_FETCH_THROTTLE = 20;
 
 const ON_FETCH_FN = function () {
   assert(
@@ -90,8 +89,6 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   limit = 10;
-
-  throttle = DEFAULT_FETCH_THROTTLE;
 
   /**
    * The number of ms to wait until previously fetched content gets marked
@@ -221,6 +218,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
     super(...arguments);
 
     this.data = {};
+    this.__tasks = A([]);
 
     return this;
   }
@@ -466,9 +464,40 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       page: pageIdx + 1,
     };
 
-    this.fetchTask.perform(range);
+    if (!this._isUnfinishedTaskForRange(range)) {
+      this.__tasks.push(this.fetchTask.perform(range));
+    }
 
     return this.sparseObjectAt(idx);
+  }
+
+  /**
+   * Checks for unfinished tasks relevant to the given range.
+   *
+   * @method _isUnfinishedTaskForRange
+   * @param {Object} range The range to place into a loading state
+   * @private
+   */
+  _isUnfinishedTaskForRange({ start, length, page }) {
+    return this.__tasks.find((task) => {
+      const [arg] = task.args;
+
+      if (task.isFinished) return false;
+      if (arg.start === start && arg.length === length && arg.page === page)
+        return true;
+    })
+      ? true
+      : false;
+  }
+
+  /**
+   * Removes finished tasks from the task tracking array.
+   *
+   * @method _cleanupFinishedTasks
+   * @private
+   */
+  _cleanupFinishedTasks() {
+    this.__tasks = this.__tasks.filter((task) => !task.isFinished);
   }
 
   /**
@@ -551,16 +580,8 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
   }
 
   fetchTask = task(async (range) => {
-    const rangeKey = JSON.stringify(range);
-
-    this.fetchingRanges = this.fetchingRanges || [];
-
-    if (this.fetchingRanges.includes(rangeKey)) return;
-
     try {
-      this.fetchingRanges.push(rangeKey);
-
-      await timeout(this.throttle);
+      await animationFrame();
 
       const { data, total } = await this._didRequestRange(range);
       const totalInt = parseInt(total, 10);
@@ -574,7 +595,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       }
 
       this.fulfill(range, data);
-      this.fetchingRanges.splice(this.fetchingRanges.indexOf(rangeKey), 1);
+      this._cleanupFinishedTasks();
     } catch (e) {
       this._requestRangeFailed(range, e);
     }
@@ -740,7 +761,7 @@ class EllaSparseItem extends ObjectProxy {
   fetchingContent = task({ drop: true }, async () => {
     setProperties(this, { content: null });
 
-    let content = await this.__fetchContent();
+    const content = await this.__fetchContent();
 
     setProperties(this, {
       content: content,
