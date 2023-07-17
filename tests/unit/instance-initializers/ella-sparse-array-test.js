@@ -7,7 +7,7 @@ import fetch from 'fetch';
 import { assign } from '@ember/polyfills';
 import { defer } from 'rsvp';
 import { get, set } from '@ember/object';
-import { later, run } from '@ember/runloop';
+import { later } from '@ember/runloop';
 import { settled, waitUntil } from '@ember/test-helpers';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import { typeOf } from '@ember/utils';
@@ -135,27 +135,27 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     assert.true(subject.loading);
 
-    await settled();
+    await waitUntil(() => !subject.loading);
 
     assert.strictEqual(fetchSomeRecordsCalled, 1);
     assert.strictEqual(subject.length, 1001);
     assert.false(subject.loading);
   });
 
-  test('.objectAt initially returns loading SparseItems', function (assert) {
+  test('.objectAt initially returns loading SparseItems', async function (assert) {
     assert.expect(2);
 
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    let item = subject.objectAt(0);
+    const item = subject.objectAt(0);
 
     assert.true(item.is_loading);
 
-    return settled().then(() => {
-      assert.false(item.is_loading);
-    });
+    await waitUntil(() => !item.is_loading);
+
+    assert.false(item.is_loading);
   });
 
   test('.objectAt initially returns stale SparseItems', function (assert) {
@@ -165,7 +165,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       'on-fetch': fetchSomeRecords,
     });
 
-    let item = subject.objectAt(0);
+    const item = subject.objectAt(0);
 
     assert.true(item.isSparseItem);
     assert.true(item.__stale__);
@@ -174,8 +174,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('.objectAt returns `undefined` if requested index out of range', function (assert) {
     assert.expect(2);
 
-    let l = 42;
     let item;
+    const l = 42;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
@@ -194,8 +194,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-    let item1 = subject.firstObject;
-    let item2 = subject.objectAt(0);
+    const item1 = subject.firstObject;
+    const item2 = subject.objectAt(0);
 
     assert.true(item1.isSparseItem);
     assert.strictEqual(item1, item2);
@@ -204,18 +204,22 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('`lastObject` returns object at index (length - 1)', function (assert) {
     assert.expect(3);
 
+    const l = 67;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-    let l = 67;
-    let item1 = subject.lastObject;
+
+    let item1;
+    let item2;
+
+    item1 = subject.lastObject;
 
     assert.strictEqual(typeof item1, 'undefined');
 
     subject.length = l;
 
     item1 = subject.lastObject;
-    let item2 = subject.objectAt(l - 1);
+    item2 = subject.objectAt(l - 1);
 
     assert.true(item1.isSparseItem);
     assert.strictEqual(item1, item2);
@@ -235,7 +239,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     subject.objectAt(120);
 
-    await settled();
+    await waitUntil(() => subject.length !== 505);
 
     assert.strictEqual(subject.length, 622);
   });
@@ -254,12 +258,12 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     subject.objectAt(120);
 
-    await settled();
+    await waitUntil(() => subject.length !== 505);
 
     assert.strictEqual(subject.length, 1003);
   });
 
-  test('it keeps existing length when resolved without a total', function (assert) {
+  test('it keeps existing length when resolved without a total', async function (assert) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -269,14 +273,14 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     assert.strictEqual(subject.length, 505);
 
-    run(() => {
-      subject.objectAt(120);
-    });
+    subject.objectAt(120);
+
+    await settled();
 
     assert.strictEqual(subject.length, 505);
   });
 
-  test('it keeps existing length when resolved with a negative total', function (assert) {
+  test('it keeps existing length when resolved with a negative total', async function (assert) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -288,14 +292,14 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     assert.strictEqual(subject.length, 505);
 
-    run(() => {
-      subject.objectAt(120);
-    });
+    subject.objectAt(120);
+
+    await settled();
 
     assert.strictEqual(subject.length, 505);
   });
 
-  test('it keeps existing length when resolved with a total of Infinity', function (assert) {
+  test('it keeps existing length when resolved with a total of Infinity', async function (assert) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -307,14 +311,14 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     assert.strictEqual(subject.length, 505);
 
-    run(() => {
-      subject.objectAt(120);
-    });
+    subject.objectAt(120);
+
+    await settled();
 
     assert.strictEqual(subject.length, 505);
   });
 
-  test('it keeps existing length when resolved with an invalid total', function (assert) {
+  test('it keeps existing length when resolved with an invalid total', async function (assert) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -326,122 +330,97 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     assert.strictEqual(subject.length, 505);
 
-    run(() => {
-      subject.objectAt(120);
-    });
+    subject.objectAt(120);
+
+    await settled();
 
     assert.strictEqual(subject.length, 505);
   });
 
-  test('its item properties are updated once fetched', function (assert) {
+  test('its item properties are updated once fetched', async function (assert) {
     assert.expect(2);
 
-    let item1;
-    let item2;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    run(() => {
-      subject.length;
-      item1 = subject.objectAt(0);
-      item2 = subject.objectAt(723);
-    });
+    const item1 = subject.objectAt(0);
+    const item2 = subject.objectAt(723);
 
-    return settled().then(() => {
-      assert.strictEqual(get(item1, 'phrase'), 'brainy carnation');
-      assert.strictEqual(get(item2, 'phrase'), 'obeisant bunghole');
-    });
+    await waitUntil(() => !(item1.is_loading || item2.is_loading));
+
+    assert.strictEqual(get(item1, 'phrase'), 'brainy carnation');
+    assert.strictEqual(get(item2, 'phrase'), 'obeisant bunghole');
   });
 
-  test('.objectAt does not fetch data when sent a options.noFetch is truthy', function (assert) {
+  test('.objectAt does not fetch data when sent a options.noFetch is truthy', async function (assert) {
     assert.expect(2);
 
-    let item1;
-    let item2;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    run(() => {
-      subject.length;
-      item1 = subject.objectAt(22, { noFetch: true });
-      item2 = subject.objectAt(123, { noFetch: true });
-    });
+    const item1 = subject.objectAt(22, { noFetch: true });
+    const item2 = subject.objectAt(123, { noFetch: true });
 
-    return settled().then(() => {
-      assert.notOk(item1.content);
-      assert.notOk(item2.content);
-    });
+    await settled();
+
+    assert.notOk(item1.content);
+    assert.notOk(item2.content);
   });
 
-  test('.objectAt does not fetch data when enabled: false', function (assert) {
+  test('.objectAt does not fetch data when enabled: false', async function (assert) {
     assert.expect(2);
 
-    let item1;
-    let item2;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
       enabled: false,
     });
 
-    run(() => {
-      subject.length;
-      item1 = subject.objectAt(22);
-      item2 = subject.objectAt(123);
-    });
+    const item1 = subject.objectAt(22);
+    const item2 = subject.objectAt(123);
 
-    return settled().then(() => {
-      assert.notOk(item1.content);
-      assert.notOk(item2.content);
-    });
+    await settled();
+
+    assert.notOk(item1.content);
+    assert.notOk(item2.content);
   });
 
-  test('.objectsAt assembles an array of SparseItems', function (assert) {
+  test('.objectsAt assembles an array of SparseItems', async function (assert) {
     assert.expect(5);
 
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    run(() => {
-      subject.length;
-      items = subject.objectsAt([3, 5, 567, 456, 901]);
-    });
+    const items = subject.objectsAt([3, 5, 567, 456, 901]);
 
-    return settled().then(() => {
-      assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
-      assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
-      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
-      assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
-      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
-    });
+    await settled();
+
+    assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
+    assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
+    assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
+    assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
+    assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
   });
 
   test('it loads the first "page" (default 10) of SparseItems automatically', async function (assert) {
     assert.expect(4);
 
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
+    const items = subject.objectsAt([0, 9]);
 
-    run(() => {
-      items = subject.objectsAt([0, 9]);
-    });
-
-    await settled();
+    await waitUntil(() => !items[0].is_loading);
 
     assert.strictEqual(fetchSomeRecordsCalled, 1);
     assert.strictEqual(get(items[0], 'phrase'), 'brainy carnation');
     assert.strictEqual(get(items[1], 'phrase'), 'outgoing graph');
 
-    run(() => {
-      subject.objectAt(19);
-    });
+    const item = subject.objectAt(19);
 
-    await settled();
+    await waitUntil(() => !item.is_loading);
 
     assert.strictEqual(
       fetchSomeRecordsCalled,
@@ -453,29 +432,23 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('its "page size" can be modified with the "limit" property', async function (assert) {
     assert.expect(5);
 
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
       limit: 20,
     });
+    const items = subject.objectsAt([0, 9]);
 
-    run(() => {
-      items = subject.objectsAt([0, 9]);
-    });
-
-    await settled();
+    await waitUntil(() => get(items[0], 'phrase') && get(items[1], 'phrase'));
 
     assert.strictEqual(fetchSomeRecordsCalled, 1);
     assert.strictEqual(get(items[0], 'phrase'), 'brainy carnation');
     assert.strictEqual(get(items[1], 'phrase'), 'outgoing graph');
 
-    run(() => {
-      assert.strictEqual(
-        get(subject.objectAt(19), 'phrase'),
-        'precede average',
-        'item 20 already fetched'
-      );
-    });
+    assert.strictEqual(
+      get(subject.objectAt(19), 'phrase'),
+      'precede average',
+      'item 20 already fetched'
+    );
 
     await settled();
 
@@ -486,18 +459,14 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     );
   });
 
-  test('its items init with __stale__: true; __stale__ becomes false once content loads', function (assert) {
+  test('its items init with __stale__: true; __stale__ becomes false once content loads', async function (assert) {
     assert.expect(12);
 
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    run(() => {
-      subject.length;
-      items = subject.objectsAt([3, 5, 567, 456, 901, 7]);
-    });
+    const items = subject.objectsAt([3, 5, 567, 456, 901, 7]);
 
     assert.true(items[0].__stale__);
     assert.true(items[1].__stale__);
@@ -506,68 +475,76 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     assert.true(items[4].__stale__);
     assert.true(items[5].__stale__);
 
-    return settled().then(() => {
-      assert.false(items[0].__stale__);
-      assert.false(items[1].__stale__);
-      assert.false(items[2].__stale__);
-      assert.false(items[3].__stale__);
-      assert.false(items[4].__stale__);
-      assert.false(items[5].__stale__);
+    await waitUntil(() => {
+      for (let i = 0; i < items.length; ++i) {
+        if (items[i].is_loading) return false;
+      }
+
+      return true;
     });
+
+    assert.false(items[0].__stale__);
+    assert.false(items[1].__stale__);
+    assert.false(items[2].__stale__);
+    assert.false(items[3].__stale__);
+    assert.false(items[4].__stale__);
+    assert.false(items[5].__stale__);
   });
 
-  test('.unset removes SparseItems and marks them stale', function (assert) {
+  test('.unset removes SparseItems and marks them stale', async function (assert) {
     assert.expect(26);
 
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    run(() => {
-      subject.length;
-      items = subject.objectsAt([3, 5, 567, 456, 901, 7]);
+    const items = subject.objectsAt([3, 5, 567, 456, 901, 7]);
+
+    await waitUntil(() => {
+      for (let i = 0; i < items.length; ++i) {
+        if (items[i].is_loading) return false;
+      }
+
+      return true;
     });
 
-    return settled().then(() => {
-      assert.false(items[0].__stale__);
-      assert.false(items[1].__stale__);
-      assert.false(items[2].__stale__);
-      assert.false(items[3].__stale__);
-      assert.false(items[4].__stale__);
-      assert.false(items[5].__stale__);
+    assert.false(items[0].__stale__);
+    assert.false(items[1].__stale__);
+    assert.false(items[2].__stale__);
+    assert.false(items[3].__stale__);
+    assert.false(items[4].__stale__);
+    assert.false(items[5].__stale__);
 
-      assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
-      assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
-      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
-      assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
-      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
-      assert.strictEqual(get(items[5], 'phrase'), 'brush tablecloth');
+    assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
+    assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
+    assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
+    assert.strictEqual(get(items[3], 'phrase'), 'clip boxer');
+    assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
+    assert.strictEqual(get(items[5], 'phrase'), 'brush tablecloth');
 
-      subject.unset(7);
+    subject.unset(7);
 
-      assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
-      assert.strictEqual(get(items[5], 'phrase'), undefined);
+    assert.strictEqual(get(items[4], 'phrase'), 'protect daisy');
+    assert.strictEqual(get(items[5], 'phrase'), undefined);
 
-      subject.unset(3, 4, 5);
+    subject.unset(3, 4, 5);
 
-      assert.strictEqual(get(items[0], 'phrase'), undefined);
-      assert.strictEqual(get(items[1], 'phrase'), undefined);
-      assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
+    assert.strictEqual(get(items[0], 'phrase'), undefined);
+    assert.strictEqual(get(items[1], 'phrase'), undefined);
+    assert.strictEqual(get(items[2], 'phrase'), 'superficial anesthesiology');
 
-      subject.unset([567], [456, [901, 6, 8]]);
+    subject.unset([567], [456, [901, 6, 8]]);
 
-      assert.strictEqual(get(items[2], 'phrase'), undefined);
-      assert.strictEqual(get(items[3], 'phrase'), undefined);
-      assert.strictEqual(get(items[4], 'phrase'), undefined);
+    assert.strictEqual(get(items[2], 'phrase'), undefined);
+    assert.strictEqual(get(items[3], 'phrase'), undefined);
+    assert.strictEqual(get(items[4], 'phrase'), undefined);
 
-      assert.true(items[0].__stale__);
-      assert.true(items[1].__stale__);
-      assert.true(items[2].__stale__);
-      assert.true(items[3].__stale__);
-      assert.true(items[4].__stale__);
-      assert.true(items[5].__stale__);
-    });
+    assert.true(items[0].__stale__);
+    assert.true(items[1].__stale__);
+    assert.true(items[2].__stale__);
+    assert.true(items[3].__stale__);
+    assert.true(items[4].__stale__);
+    assert.true(items[5].__stale__);
   });
 
   test('SparseItem __ttl__ inherits SparseArray ttl', function (assert) {
@@ -577,7 +554,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       'on-fetch': fetchSomeRecords,
       ttl: 50,
     });
-    let item = subject.objectAt(0);
+    const item = subject.objectAt(0);
 
     assert.strictEqual(item.__ttl__, subject.ttl);
     assert.strictEqual(item.__ttl__, 50);
@@ -586,20 +563,15 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('SparseItem appears stale after ttl ms', function (assert) {
     assert.expect(2);
 
-    let deferred = defer();
-    let item;
+    const deferred = defer();
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-
-    run(function () {
-      subject.length;
-      item = subject.objectAt(0);
-    });
+    const item = subject.objectAt(0);
 
     later(function () {
       deferred.resolve();
-    }, 50);
+    }, 100);
 
     return deferred.promise.then(function () {
       assert.false(item.__stale__);
@@ -614,7 +586,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-    let item = subject.objectAt(37, { noFetch: true });
+    const item = subject.objectAt(37, { noFetch: true });
 
     assert.true(item.shouldFetchContent(subject.expired));
   });
@@ -622,19 +594,12 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('SparseItem .shouldFetchContent returns false while loading and after item is resolved', async function (assert) {
     assert.expect(4);
 
-    let item;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
+    const item = subject.objectAt(0);
 
-    run(() => {
-      subject.length;
-      item = subject.objectAt(0);
-    });
-
-    await waitUntil(() => get(item, 'fetchingContent.isRunning'), {
-      timeout: 500,
-    });
+    await waitUntil(() => get(item, 'fetchingContent.isRunning'));
 
     assert.true(get(item, 'fetchingContent.isRunning'));
     assert.false(item.shouldFetchContent(subject.expired));
@@ -648,13 +613,11 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('it only requests each "page" once', async function (assert) {
     assert.expect(4);
 
-    let item;
-    let items;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    await settled();
+    await waitUntil(() => subject.isLength);
 
     assert.strictEqual(
       fetchSomeRecordsCalled,
@@ -662,14 +625,12 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       'automatically fetch first page'
     );
 
-    run(() => {
-      subject.length;
-      items = subject.objectsAt([0, 1, 2, 3, 4]);
-      subject.objectsAt([5, 6, 7, 8]);
-      item = subject.objectAt(9);
-    });
+    const items = subject.objectsAt([0, 1, 2, 3, 4]);
+    const item = subject.objectAt(9);
 
-    await settled();
+    subject.objectsAt([5, 6, 7, 8]);
+
+    await waitUntil(() => !(items[2].is_loading || item.is_loading));
 
     assert.strictEqual(get(items[2], 'phrase'), 'cheap milk');
     assert.strictEqual(get(item, 'phrase'), 'outgoing graph');
@@ -683,23 +644,19 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('Calling .expire makes all SparseItems stale and cancels all "fetchTasks"', async function (assert) {
     assert.expect(6);
 
-    let item;
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
+    const item = subject.objectAt(1);
 
-    item = subject.objectAt(1);
-
-    await settled();
+    await waitUntil(() => !item.is_loading);
 
     assert.false(get(item, 'fetchingContent.isRunning'));
     assert.false(item.shouldFetchContent(subject.expired));
 
     subject.objectAt(123);
 
-    await waitUntil(() => get(subject, 'fetchTask.isRunning'), {
-      timeout: 500,
-    });
+    await waitUntil(() => get(subject, 'fetchTask.isRunning'));
 
     assert.true(get(subject, 'fetchTask.isRunning'));
 
@@ -720,22 +677,25 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     items = subject.objectsAt([0, 1, 2, 3, 4]);
 
-    await settled();
+    await waitUntil(() => !items[0].is_loading);
 
     assert.strictEqual(fetchSomeRecordsCalled, 1);
 
-    let before0 = items[0].__lastFetch__;
-    let before1 = items[1].__lastFetch__;
+    const before0 = items[0].__lastFetch__;
+    const before1 = items[1].__lastFetch__;
 
     subject.expire();
-    items = subject.objectsAt([0, 1, 2, 3, 4]);
 
     await settled();
 
+    items = subject.objectsAt([0, 1, 2, 3, 4]);
+
+    await waitUntil(() => !items[0].is_loading);
+
     assert.strictEqual(fetchSomeRecordsCalled, 2);
 
-    let after0 = items[0].__lastFetch__;
-    let after1 = items[1].__lastFetch__;
+    const after0 = items[0].__lastFetch__;
+    const after1 = items[1].__lastFetch__;
 
     assert.ok(after0 > before0);
     assert.ok(after1 > before1);
@@ -744,17 +704,16 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('.filterBy sets remoteQuery property', async function (assert) {
     assert.expect(2);
 
-    let item;
+    const query = { q: 'charm' };
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
 
-    var query = { q: 'charm' };
-
     subject.filterBy(query);
-    item = subject.objectAt(0);
 
-    await settled();
+    const item = subject.objectAt(0);
+
+    await waitUntil(() => get(item, 'phrase'));
 
     assert.deepEqual(query, subject.remoteQuery);
     assert.strictEqual(get(item, 'phrase'), 'charming snowboarding');
@@ -763,11 +722,10 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('.filterBy causes isLength to become false', function (assert) {
     assert.expect(5);
 
+    const query = { q: 'charm' };
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-
-    let query = { q: 'charm' };
 
     assert.false(subject.isLength);
 
@@ -804,7 +762,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
     subject.filterBy({ q: 'ou' });
     subject.filterBy({ q: 'charm' });
 
-    await settled();
+    await waitUntil(() => subject.isLength);
 
     assert.strictEqual(subject.length, 2);
   });
@@ -844,11 +802,10 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('.filter always throws an error', function (assert) {
     assert.expect(4);
 
+    const query = { foo: 'bar', baz: 'hello, world' };
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       'on-fetch': fetchSomeRecords,
     });
-
-    let query = { foo: 'bar', baz: 'hello, world' };
 
     assert.throws(
       function () {
@@ -888,9 +845,7 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   test('it throws error when "on-fetch" is not a function', function (assert) {
     assert.expect(3);
 
-    run(() => {
-      assert.ok(this.owner.factoryFor('ella-sparse:array').create());
-    });
+    assert.ok(this.owner.factoryFor('ella-sparse:array').create());
 
     assert.throws(
       function () {

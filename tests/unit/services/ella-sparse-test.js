@@ -1,19 +1,17 @@
 /* eslint ember/named-functions-in-promises: 0 */
 /* eslint ember/no-get: 0 */
 
-import { run } from '@ember/runloop';
-import { get } from '@ember/object';
-import { assign } from '@ember/polyfills';
-import { typeOf } from '@ember/utils';
-import { getOwner } from '@ember/application';
-
 import { module, test } from 'qunit';
-
 import { setupTest } from 'ember-qunit';
-import { settled } from '@ember/test-helpers';
-import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
-import { setupMirage } from 'ember-cli-mirage/test-support';
 import fetch from 'fetch';
+import { assign } from '@ember/polyfills';
+import { get } from '@ember/object';
+import { getOwner } from '@ember/application';
+import { initialize } from 'dummy/instance-initializers/ella-sparse-array';
+import { run } from '@ember/runloop';
+import { setupMirage } from 'ember-cli-mirage/test-support';
+import { typeOf } from '@ember/utils';
+import { waitUntil } from '@ember/test-helpers';
 
 const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
@@ -80,29 +78,26 @@ module('Unit | Service | ella sparse', function (hooks) {
   });
 
   test('ella-sparse service exists', function (assert) {
-    let service = this.owner.lookup('service:ella-sparse');
+    const service = this.owner.lookup('service:ella-sparse');
 
     assert.ok(service);
     assert.ok(this.service);
   });
 
   test('.array returns an instance of EllaSparseArray', function (assert) {
-    let arr = this.service.array(fetchSomeRecords);
+    const arr = this.service.array(fetchSomeRecords);
 
     assert.ok(arr.isSparseArray);
   });
 
   test('.array sets the "on-fetch" method of the returned EllaSparseArray', async function (assert) {
-    let item1;
-    let item2;
-    let arr = this.service.array(fetchSomeRecords);
-
     assert.expect(3);
 
-    item1 = arr.objectAt(1);
-    item2 = arr.objectAt(314);
+    const arr = this.service.array(fetchSomeRecords);
+    const item1 = arr.objectAt(1);
+    const item2 = arr.objectAt(314);
 
-    await settled();
+    await waitUntil(() => !(item1.is_loading || item2.is_loading));
 
     assert.strictEqual(fetchSomeRecordsCalled, 2);
     assert.strictEqual(get(item1, 'phrase'), 'ossified combine');
@@ -110,19 +105,19 @@ module('Unit | Service | ella sparse', function (hooks) {
   });
 
   test('.array sets "ttl" property on instance of EllaSparseArray', function (assert) {
-    let arr = this.service.array(fetchSomeRecords, { ttl: 50 });
+    const arr = this.service.array(fetchSomeRecords, { ttl: 50 });
 
     assert.strictEqual(arr.ttl, 50);
   });
 
   test('.array sets "enabled" property on instance of EllaSparseArray', function (assert) {
-    let arr = this.service.array(fetchSomeRecords, { enabled: false });
+    const arr = this.service.array(fetchSomeRecords, { enabled: false });
 
     assert.false(arr.enabled);
   });
 
   test('.array sets "length" property on instance of EllaSparseArray', function (assert) {
-    let arr = this.service.array(fetchSomeRecords, { length: 1000 });
+    const arr = this.service.array(fetchSomeRecords, { length: 1000 });
 
     assert.strictEqual(arr.length, 1000);
   });
