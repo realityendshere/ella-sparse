@@ -244,7 +244,8 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    */
   expire() {
     this.fetchTask.cancelAll();
-    set(this, 'expired', Date.now());
+    this.__tasks = A([]);
+    this.expired = Date.now();
 
     return this;
   }
