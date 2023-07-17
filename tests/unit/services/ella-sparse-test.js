@@ -92,25 +92,21 @@ module('Unit | Service | ella sparse', function (hooks) {
     assert.ok(arr.isSparseArray);
   });
 
-  test('.array sets the "on-fetch" method of the returned EllaSparseArray', function (assert) {
+  test('.array sets the "on-fetch" method of the returned EllaSparseArray', async function (assert) {
     let item1;
     let item2;
     let arr = this.service.array(fetchSomeRecords);
 
     assert.expect(3);
 
-    run(() => {
-      arr.length;
-      item1 = arr.objectAt(1);
-      item2 = arr.objectAt(314);
-    });
+    item1 = arr.objectAt(1);
+    item2 = arr.objectAt(314);
+
+    await settled();
 
     assert.strictEqual(fetchSomeRecordsCalled, 2);
-
-    return settled().then(() => {
-      assert.strictEqual(get(item1, 'phrase'), 'ossified combine');
-      assert.strictEqual(get(item2, 'phrase'), 'peaceful cloister');
-    });
+    assert.strictEqual(get(item1, 'phrase'), 'ossified combine');
+    assert.strictEqual(get(item2, 'phrase'), 'peaceful cloister');
   });
 
   test('.array sets "ttl" property on instance of EllaSparseArray', function (assert) {
