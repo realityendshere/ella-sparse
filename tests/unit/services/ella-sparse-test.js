@@ -78,6 +78,8 @@ module('Unit | Service | ella sparse', function (hooks) {
   });
 
   test('ella-sparse service exists', function (assert) {
+    assert.expect(2);
+
     const service = this.owner.lookup('service:ella-sparse');
 
     assert.ok(service);
@@ -85,6 +87,8 @@ module('Unit | Service | ella sparse', function (hooks) {
   });
 
   test('.array returns an instance of EllaSparseArray', function (assert) {
+    assert.expect(1);
+
     const arr = this.service.array(fetchSomeRecords);
 
     assert.ok(arr.isSparseArray);
@@ -105,18 +109,24 @@ module('Unit | Service | ella sparse', function (hooks) {
   });
 
   test('.array sets "ttl" property on instance of EllaSparseArray', function (assert) {
+    assert.expect(1);
+
     const arr = this.service.array(fetchSomeRecords, { ttl: 50 });
 
     assert.strictEqual(arr.ttl, 50);
   });
 
   test('.array sets "enabled" property on instance of EllaSparseArray', function (assert) {
+    assert.expect(1);
+
     const arr = this.service.array(fetchSomeRecords, { enabled: false });
 
     assert.false(arr.enabled);
   });
 
   test('.array sets "length" property on instance of EllaSparseArray', function (assert) {
+    assert.expect(1);
+
     const arr = this.service.array(fetchSomeRecords, { length: 1000 });
 
     assert.strictEqual(arr.length, 1000);

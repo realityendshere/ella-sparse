@@ -226,6 +226,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it updates length when resolved with numeric total', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -245,6 +247,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it updates length when resolved with parseable total', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -264,6 +268,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it keeps existing length when resolved without a total', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -281,6 +287,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it keeps existing length when resolved with a negative total', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -300,6 +308,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it keeps existing length when resolved with a total of Infinity', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
@@ -319,6 +329,8 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   });
 
   test('it keeps existing length when resolved with an invalid total', async function (assert) {
+    assert.expect(2);
+
     const subject = this.owner.factoryFor('ella-sparse:array').create({
       length: 505,
       'on-fetch': function () {
