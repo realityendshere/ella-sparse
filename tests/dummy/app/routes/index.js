@@ -1,8 +1,5 @@
 import Route from '@ember/routing/route';
-import { assign } from '@ember/polyfills';
 import { inject as service } from '@ember/service';
-
-const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 
 class IndexRoute extends Route {
   @service ellaSparse;
@@ -13,7 +10,7 @@ class IndexRoute extends Route {
 
     return ellaSparse.array(
       async (range = {}, query = {}) => {
-        query = assignFn(
+        query = Object.assign(
           {
             limit: range.length,
             offset: range.start,

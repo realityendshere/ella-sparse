@@ -4,7 +4,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 import fetch from 'fetch';
-import { assign } from '@ember/polyfills';
 import { defer } from 'rsvp';
 import { get, set } from '@ember/object';
 import { later } from '@ember/runloop';
@@ -12,7 +11,6 @@ import { settled, waitUntil } from '@ember/test-helpers';
 import { startMirage } from 'dummy/initializers/ember-cli-mirage';
 import { typeOf } from '@ember/utils';
 
-const assignFn = typeof Object.assign === 'function' ? Object.assign : assign;
 let fetchSomeRecordsCalled = 0;
 
 const objectToParams = function (obj) {
@@ -31,7 +29,7 @@ const objectToParams = function (obj) {
 const fetchSomeRecords = function (range = {}, query = {}) {
   fetchSomeRecordsCalled = fetchSomeRecordsCalled + 1;
 
-  query = assignFn(
+  query = Object.assign(
     {
       limit: range.length,
       offset: range.start,
