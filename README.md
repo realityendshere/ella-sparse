@@ -37,7 +37,7 @@ yet, the parts of Emberella Sparse that do work pair nicely with
 
 * Ember.js v4.4 or above
 * Ember CLI v4.4 or above
-* Node.js v14 or above
+* Node.js v16 or above
 
 It passes all tests in the latest versions of Chrome, Firefox, and
 Safari (macOS and iOS).
