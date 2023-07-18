@@ -100,6 +100,7 @@
     "configPath": "tests/dummy/config"
   },
   "resolutions": {
+    "@embroider/macros": "1.12.3",
     "ember-cli/portfinder": "1.0.21"
   }
 }
