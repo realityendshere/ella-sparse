@@ -23,6 +23,7 @@ module.exports = {
     browser: true,
   },
   rules: {
+    'no-console': 'error',
     'prefer-const': 'error',
     'qunit/require-expect': [2, 'always'],
   },
