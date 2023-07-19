@@ -1,15 +1,10 @@
-import { discoverEmberDataModels } from 'ember-cli-mirage';
 import { createServer } from 'miragejs';
 
 /**
  * Initializes Mirage
  */
 export default function (config) {
-  return createServer({
-    ...config,
-    models: { ...discoverEmberDataModels(), ...config.models },
-    routes,
-  });
+  return createServer({ ...config, routes });
 }
 
 function routes() {

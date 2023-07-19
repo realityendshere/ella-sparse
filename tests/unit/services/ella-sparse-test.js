@@ -70,10 +70,6 @@ module('Unit | Service | ella sparse', function (hooks) {
     });
   });
 
-  hooks.afterEach(function () {
-    this.server.shutdown();
-  });
-
   test('ella-sparse service exists', function (assert) {
     assert.expect(2);
 

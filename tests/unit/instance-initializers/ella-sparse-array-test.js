@@ -8,7 +8,7 @@ import { defer } from 'rsvp';
 import { get, set } from '@ember/object';
 import { later } from '@ember/runloop';
 import { settled, waitUntil } from '@ember/test-helpers';
-import { startMirage } from 'dummy/initializers/ember-cli-mirage';
+import { setupMirage } from 'ember-cli-mirage/test-support';
 import { typeOf } from '@ember/utils';
 
 let fetchSomeRecordsCalled = 0;
@@ -56,16 +56,11 @@ const fetchSomeRecords = function (range = {}, query = {}) {
 
 module('Unit | Instance Initializer | ella sparse array', function (hooks) {
   setupTest(hooks);
+  setupMirage(hooks);
 
   hooks.beforeEach(function () {
     fetchSomeRecordsCalled = 0;
-
-    this.server = startMirage();
     this.server.timing = 10;
-  });
-
-  hooks.afterEach(function () {
-    this.server.shutdown();
   });
 
   test('it uses a factory to create new instances', function (assert) {
