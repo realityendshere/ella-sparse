@@ -398,7 +398,13 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
 
     const items = subject.objectsAt([3, 5, 567, 456, 901]);
 
-    await settled();
+    await waitUntil(() => {
+      for (const item of items) {
+        if (item.is_loading) return false;
+      }
+
+      return true;
+    });
 
     assert.strictEqual(get(items[0], 'phrase'), 'smell blueberry');
     assert.strictEqual(get(items[1], 'phrase'), 'rot pickle');
