@@ -311,14 +311,14 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   fulfill(range, array) {
-    array = A(array);
-
     for (let i = 0; i < range.length; i++) {
       const itemIndex = range.start + i;
       const item = this.sparseObjectAt(itemIndex);
+      const content =
+        typeof array.objectAt === 'function' ? array.objectAt(i) : array[i];
 
       if (item && typeof item.resolveContent === 'function') {
-        item.resolveContent(array.objectAt(i));
+        item.resolveContent(content);
       }
     }
 
