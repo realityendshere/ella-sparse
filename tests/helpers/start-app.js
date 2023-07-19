@@ -7,7 +7,7 @@ export default function startApp(attrs) {
   attributes = Object.assign(attributes, attrs); // use defaults, but you can override;
 
   return run(() => {
-    let application = Application.create(attributes);
+    const application = Application.create(attributes);
     application.setupForTesting();
     application.injectTestHelpers();
     return application;

@@ -314,8 +314,8 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
     array = A(array);
 
     for (let i = 0; i < range.length; i++) {
-      let itemIndex = range.start + i;
-      let item = this.sparseObjectAt(itemIndex);
+      const itemIndex = range.start + i;
+      const item = this.sparseObjectAt(itemIndex);
 
       if (item && typeof item.resolveContent === 'function') {
         item.resolveContent(array.objectAt(i));
@@ -334,7 +334,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   isCurrentFilter(obj) {
-    let current = this.remoteQuery;
+    const current = this.remoteQuery;
 
     return JSON.stringify(obj) === JSON.stringify(current);
   }
@@ -353,21 +353,15 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   objectAt(idx, options = {}) {
+    const { isLength, length } = this;
+
     idx = parseInt(idx, 10);
 
     // Arrays and negative indexes don't mix
-    if (isNaN(idx) || idx < 0) {
-      return undefined;
-    }
+    if (isNaN(idx) || idx < 0) return undefined;
+    if (isLength && idx >= length) return undefined;
 
-    const { isLength, length } = this;
-    let item;
-
-    if (isLength && idx >= length) {
-      return undefined;
-    }
-
-    item = this.sparseObjectAt(idx);
+    const item = this.sparseObjectAt(idx);
 
     if (item?.shouldFetchContent(this.expired) === true) {
       this.fetchObjectAt(idx, options);
@@ -412,7 +406,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @public
    */
   unset(...idx) {
-    let indexes = A([].concat.apply([], idx));
+    const indexes = A([].concat.apply([], idx));
 
     indexes.forEach((i) => {
       this._unset(i);
@@ -522,12 +516,12 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    * @private
    */
   _requestRangeFailed(range, err) {
-    let data = this.data;
-    let from = range.start;
-    let until = Math.min(range.start + range.length, data.length);
+    const data = this.data;
+    const from = range.start;
+    const until = Math.min(range.start + range.length, data.length);
 
     for (let i = from; i < until; i++) {
-      let item = data[i];
+      const item = data[i];
 
       if (item && typeof item.reportError === 'function') {
         item.reportError(err);
@@ -544,7 +538,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
    */
   _startFetchingContentInRange(range) {
     for (let i = range.start; i < range.start + range.length; i++) {
-      let item = this.sparseObjectAt(i);
+      const item = this.sparseObjectAt(i);
 
       if (item) {
         item.fetchContent();
@@ -567,7 +561,7 @@ class EllaSparseArray extends EmberObject.extend(EmberArray) {
       return this;
     }
 
-    let item = get(this, this.pathToIndex(idx));
+    const item = get(this, this.pathToIndex(idx));
 
     if (typeof item.resetContent === 'function') {
       item.resetContent();

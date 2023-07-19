@@ -38,15 +38,15 @@ const fetchSomeRecords = function (range = {}, query = {}) {
     query
   );
 
-  let params = objectToParams(query);
-  let uri = `/api/words?${params}`;
+  const params = objectToParams(query);
+  const uri = `/api/words?${params}`;
 
   return fetch(uri)
     .then((response) => {
       return response.json();
     })
     .then((json = {}) => {
-      let result = {
+      const result = {
         data: json.data,
         total: get(json, 'meta.total'),
       };

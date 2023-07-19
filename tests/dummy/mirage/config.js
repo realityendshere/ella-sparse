@@ -14,14 +14,15 @@ export default function (config) {
 
 function routes() {
   this.get('/api/words', function (schema, request) {
+    const { q } = request.queryParams;
+    let { offset, limit } = request.queryParams;
     let allWords = schema.words.all();
-    let { offset, limit, q } = request.queryParams;
 
     offset = parseInt(offset, 10) || 0;
     limit = parseInt(limit, 10) || 20;
 
     if (q && `${q}`.trim() !== '') {
-      let exp = new RegExp(`${q}`, 'g');
+      const exp = new RegExp(`${q}`, 'g');
 
       allWords = allWords.filter((item) => {
         return item.phrase.match(exp);
@@ -29,7 +30,7 @@ function routes() {
     }
 
     if (request.requestHeaders.Accept === 'application/vnd.api+json') {
-      let json = this.serialize(allWords.slice(offset, offset + limit));
+      const json = this.serialize(allWords.slice(offset, offset + limit));
 
       json.meta = { total: allWords.length };
 

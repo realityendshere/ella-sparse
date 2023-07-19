@@ -37,15 +37,15 @@ const fetchSomeRecords = function (range = {}, query = {}) {
     query
   );
 
-  let params = objectToParams(query);
-  let uri = `/api/words?${params}`;
+  const params = objectToParams(query);
+  const uri = `/api/words?${params}`;
 
   return fetch(uri)
     .then((response) => {
       return response.json();
     })
     .then((json = {}) => {
-      let result = {
+      const result = {
         data: json.data,
         total: get(json, 'meta.total'),
       };
@@ -207,17 +207,15 @@ module('Unit | Instance Initializer | ella sparse array', function (hooks) {
       'on-fetch': fetchSomeRecords,
     });
 
-    let item1;
-    let item2;
-
-    item1 = subject.lastObject;
+    let item1 = subject.lastObject;
 
     assert.strictEqual(typeof item1, 'undefined');
 
     subject.length = l;
 
     item1 = subject.lastObject;
-    item2 = subject.objectAt(l - 1);
+
+    const item2 = subject.objectAt(l - 1);
 
     assert.true(item1.isSparseItem);
     assert.strictEqual(item1, item2);
