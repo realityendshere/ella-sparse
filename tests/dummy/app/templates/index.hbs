@@ -1,26 +1,24 @@
-{{#ella-treadmill
-  content=this.model
-  row="5em"
-  on-scroll-start=this.handleScrollStart
-  on-scroll-end=this.handleScrollEnd
-  as |item|
-}}
-  {{#if item.is_loading}}
-    Loading...
-  {{else}}
-    <p>
-      [{{item.id}}] {{item.phrase}}
-    </p>
-  {{/if}}
-{{else}}
-  {{#if this.model.loading}}
-    Loading...
-  {{else}}
-    <p>Nothing to see here.</p>
-  {{/if}}
-{{/ella-treadmill}}
+<EllaTreadmill
+  @content={{this.model}}
+  @row="5em"
+  @on-scroll-start={{this.handleScrollStart}}
+  @on-scroll-end={{this.handleScrollEnd}}
+>
+  <:default as |item|>
+    {{#if item.is_loading}}
+      Loading...
+    {{else}}
+      <p>
+        [{{item.id}}] {{item.phrase}}
+      </p>
+    {{/if}}
+  </:default>
 
-
-{{!-- {{#each this.model as |item|}}
-  <p>{{item}}</p>
-{{/each}} --}}
+  <:inverse>
+    {{#if this.model.loading}}
+      Loading...
+    {{else}}
+      <p>Nothing to see here.</p>
+    {{/if}}
+  </:inverse>
+</EllaTreadmill>
